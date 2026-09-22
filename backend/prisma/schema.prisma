@@ -1,0 +1,302 @@
+// MESUREGX Database Schema
+// Optimized for SQLite development with full PostgreSQL compatibility
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  phone        String?
+  role         String   @default("BUSINESS_OWNER") // BUSINESS_OWNER, OFFICER, ADMIN
+  status       String   @default("ACTIVE") // ACTIVE, INACTIVE, SUSPENDED
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  business     Business?
+  officer      Officer?
+  auditLogs    AuditLog[]
+  notifications Notification[]
+}
+
+model Business {
+  id           String   @id @default(uuid())
+  userId       String   @unique
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  businessName String
+  ownerName    String
+  email        String
+  mobile       String
+  address      String
+  city         String
+  district     String
+  state        String
+  pincode      String
+  businessType String   @default("Retail Store")
+  gstNumber    String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  instruments  Instrument[]
+  applications VerificationApplication[]
+  certificates Certificate[]
+  payments     Payment[]
+  complaints   Complaint[]
+}
+
+model Officer {
+  id           String   @id @default(uuid())
+  userId       String   @unique
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  officerCode  String   @unique // e.g. OFF-TN-042
+  name         String
+  email        String
+  phone        String
+  district     String
+  designation  String   @default("Inspector of Legal Metrology")
+  badgeNumber  String?
+  status       String   @default("ACTIVE") // ACTIVE, INACTIVE, ON_LEAVE
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  assignments  Assignment[]
+  verifications Verification[]
+  certificates Certificate[]
+  complaints   Complaint[]
+}
+
+model InstrumentType {
+  id                   String   @id @default(uuid())
+  code                 String   @unique // e.g. WEIGHING_SCALE, FUEL_DISPENSER
+  name                 String
+  description          String?
+  defaultValidityMonths Int    @default(12)
+  isActive             Boolean  @default(true)
+  createdAt            DateTime @default(now())
+
+  instruments          Instrument[]
+  verificationRules    VerificationRule[]
+}
+
+model Instrument {
+  id                 String   @id @default(uuid())
+  customId           String   @unique // e.g. WX-1001
+  businessId         String
+  business           Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  typeId             String
+  instrumentType     InstrumentType @relation(fields: [typeId], references: [id])
+  manufacturer       String
+  model              String
+  serialNumber       String
+  capacity           Float
+  capacityUnit       String   @default("kg") // kg, g, L, m
+  accuracyClass      String   @default("III") // I, II, III, IIII
+  purchaseDate       DateTime?
+  installationLocation String
+  description        String?
+  status             String   @default("PENDING_VERIFICATION") // PENDING_VERIFICATION, VERIFIED, EXPIRED, REJECTED
+  currentCertificateId String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  applications       VerificationApplication[]
+  certificates       Certificate[]
+}
+
+model VerificationApplication {
+  id                String   @id @default(uuid())
+  applicationNumber String   @unique // e.g. APP-2026-000001
+  businessId        String
+  business          Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  instrumentId      String
+  instrument        Instrument @relation(fields: [instrumentId], references: [id], onDelete: Cascade)
+  applicationType   String   @default("Initial Verification") // Initial Verification, Periodic Verification, Re-verification, Repair Verification, Special Verification
+  preferredDate     DateTime?
+  location          String
+  remarks           String?
+  status            String   @default("SUBMITTED") 
+  // Statuses: SUBMITTED, UNDER_REVIEW, ASSIGNED, SCHEDULED, FIELD_VERIFICATION, OFFICER_REVIEW, APPROVED, REJECTED, CERTIFICATE_ISSUED, EXPIRED
+  rejectionReason   String?
+  retestDate        DateTime?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  assignment        Assignment?
+  verification      Verification?
+  certificate       Certificate?
+  payment           Payment?
+}
+
+model Assignment {
+  id                String   @id @default(uuid())
+  applicationId     String   @unique
+  application       VerificationApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  officerId         String
+  officer           Officer  @relation(fields: [officerId], references: [id], onDelete: Cascade)
+  scheduledDate     DateTime
+  scheduledTime     String?  // e.g. "10:30 AM"
+  location          String
+  instructions      String?
+  status            String   @default("PENDING") // PENDING, IN_PROGRESS, COMPLETED, RESCHEDULED
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model Verification {
+  id                String   @id @default(uuid())
+  applicationId     String   @unique
+  application       VerificationApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  officerId         String
+  officer           Officer  @relation(fields: [officerId], references: [id], onDelete: Cascade)
+  verificationDate  DateTime @default(now())
+  latitude          Float?
+  longitude         Float?
+  locationAccuracy  Float?
+  locationAddress   String?
+  overallResult     String   @default("PENDING") // PASS, FAIL, PENDING
+  notes             String?
+  status            String   @default("DRAFT") // DRAFT, SUBMITTED, REVIEWED
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  measurements      Measurement[]
+  evidence          Evidence[]
+}
+
+model Measurement {
+  id              String       @id @default(uuid())
+  verificationId  String
+  verification    Verification @relation(fields: [verificationId], references: [id], onDelete: Cascade)
+  testNumber      Int
+  referenceValue  Float
+  observedValue   Float
+  error           Float
+  percentageError Float
+  allowedError    Float
+  result          String       // PASS or FAIL
+  remarks         String?
+  createdAt       DateTime     @default(now())
+}
+
+model Evidence {
+  id             String       @id @default(uuid())
+  verificationId String
+  verification   Verification @relation(fields: [verificationId], references: [id], onDelete: Cascade)
+  evidenceType   String       // INSTRUMENT_FRONT, SERIAL_NUMBER, DISPLAY_READING, TEST_WEIGHT, LOCATION, OTHER
+  fileName       String
+  filePath       String
+  mimeType       String?
+  fileSize       Int?
+  uploadedAt     DateTime     @default(now())
+}
+
+model VerificationRule {
+  id                   String         @id @default(uuid())
+  instrumentTypeId     String
+  instrumentType       InstrumentType @relation(fields: [instrumentTypeId], references: [id], onDelete: Cascade)
+  accuracyClass        String         @default("III")
+  capacityMin          Float          @default(0)
+  capacityMax          Float          @default(1000)
+  allowedErrorPercent  Float?
+  allowedErrorAbsolute Float?
+  validityMonths       Int            @default(12)
+  isActive             Boolean        @default(true)
+  createdAt            DateTime       @default(now())
+  updatedAt            DateTime       @updatedAt
+}
+
+model Certificate {
+  id                String   @id @default(uuid())
+  certificateNumber String   @unique // e.g. CERT-2026-000001
+  applicationId     String   @unique
+  application       VerificationApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  instrumentId      String
+  instrument        Instrument @relation(fields: [instrumentId], references: [id], onDelete: Cascade)
+  businessId        String
+  business          Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  officerId         String
+  officer           Officer  @relation(fields: [officerId], references: [id], onDelete: Cascade)
+  issueDate         DateTime @default(now())
+  expiryDate        DateTime
+  status            String   @default("VALID") // VALID, EXPIRING_SOON, EXPIRED, REVOKED
+  qrCodeData        String
+  digitalSignature  String
+  revocationReason  String?
+  revokedAt         DateTime?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  message   String
+  type      String   @default("INFO") // INFO, SUCCESS, WARNING, DANGER
+  isRead    Boolean  @default(false)
+  link      String?
+  createdAt DateTime @default(now())
+}
+
+model AuditLog {
+  id          String   @id @default(uuid())
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  userRole    String?
+  action      String   // e.g. BUSINESS_REGISTERED, APPLICATION_APPROVED
+  entity      String   // e.g. Application, Certificate, Instrument
+  entityId    String?
+  description String
+  ipAddress   String?  @default("127.0.0.1")
+  createdAt   DateTime @default(now())
+}
+
+model Payment {
+  id             String                  @id @default(uuid())
+  paymentNumber  String                  @unique // e.g. PAY-2026-000001
+  receiptNumber  String                  @unique // e.g. REC-2026-000001
+  applicationId  String                  @unique
+  application    VerificationApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  businessId     String
+  business       Business                @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  amount         Float                   @default(350.0)
+  feeType        String                  @default("Verification Fee")
+  paymentMethod  String                  @default("UPI_DEMO")
+  transactionRef String
+  status         String                  @default("PAID")
+  paidAt         DateTime?               @default(now())
+  createdAt      DateTime                @default(now())
+  updatedAt      DateTime                @updatedAt
+}
+
+model Complaint {
+  id                String    @id @default(uuid())
+  complaintNumber   String    @unique // e.g. CMP-2026-000001
+  businessId        String?
+  business          Business? @relation(fields: [businessId], references: [id], onDelete: SetNull)
+  reporterName      String
+  reporterEmail     String
+  reporterPhone     String?
+  category          String    @default("INCORRECT_MEASUREMENT")
+  certificateNumber String?
+  instrumentId      String?
+  description       String
+  evidenceUrl       String?
+  location          String?
+  status            String    @default("SUBMITTED")
+  officerId         String?
+  assignedOfficer   Officer?  @relation(fields: [officerId], references: [id], onDelete: SetNull)
+  officerNotes      String?
+  resolutionSummary String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+}

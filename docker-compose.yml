@@ -1,0 +1,62 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: mesuregx_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: mesuregx
+      POSTGRES_PASSWORD: mesuregx_password
+      POSTGRES_DB: mesuregx_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  verification-engine:
+    build:
+      context: ./verification-engine
+      dockerfile: Dockerfile
+    container_name: mesuregx_verification_engine
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - PORT=8000
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: mesuregx_backend
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    environment:
+      - PORT=5000
+      - DATABASE_URL=postgresql://mesuregx:mesuregx_password@postgres:5432/mesuregx_db?schema=public
+      - JWT_SECRET=mesuregx_super_secret_jwt_key_2026_metrology_secure
+      - FASTAPI_URL=http://verification-engine:8000
+      - FRONTEND_URL=http://localhost:5173
+      - UPLOAD_DIR=/app/uploads
+    depends_on:
+      - postgres
+      - verification-engine
+    volumes:
+      - uploads_data:/app/uploads
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: mesuregx_frontend
+    restart: unless-stopped
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
+  uploads_data:

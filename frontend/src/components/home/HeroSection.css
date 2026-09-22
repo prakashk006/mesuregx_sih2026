@@ -1,0 +1,391 @@
+/* ============================================================
+   MEASUREGX HERO — BHARAT SEVA CIVIC GLASSMORPHISM
+   Target: Institutional Precision, Masked Word-by-Word Reveal,
+   Soft Atmospheric Lighting, Clean ~60 FPS
+   ============================================================ */
+
+/* 1. Background Layers: Atmospheric Lighting, Technical Grid & Network */
+.hero-atmosphere-back {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  background:
+    radial-gradient(1200px circle at 42% 38%, rgba(16, 185, 129, 0.07) 0%, rgba(240, 253, 250, 0.5) 60%, rgba(249, 250, 251, 0.95) 100%),
+    linear-gradient(180deg, #FFFFFF 0%, #F9FAFB 100%);
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.hero-technical-grid {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  background-image:
+    linear-gradient(rgba(15, 118, 110, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(15, 118, 110, 0.035) 1px, transparent 1px);
+  background-size: 52px 52px;
+  mask-image: radial-gradient(ellipse at 40% 40%, black 20%, transparent 75%);
+  -webkit-mask-image: radial-gradient(ellipse at 40% 40%, black 20%, transparent 75%);
+  opacity: 0.9;
+}
+
+/* Subtle drifting for background network nodes */
+@keyframes bg-node-drift-1 {
+  0%, 100% { transform: translateY(0px) translateX(0px); opacity: 0.25; }
+  50% { transform: translateY(-8px) translateX(4px); opacity: 0.5; }
+}
+
+@keyframes bg-node-drift-2 {
+  0%, 100% { transform: translateY(0px) translateX(0px); opacity: 0.28; }
+  50% { transform: translateY(7px) translateX(-5px); opacity: 0.55; }
+}
+
+@keyframes bg-node-drift-3 {
+  0%, 100% { transform: translateY(0px) translateX(0px); opacity: 0.2; }
+  50% { transform: translateY(-5px) translateX(-4px); opacity: 0.4; }
+}
+
+.node-anim-0 { animation: bg-node-drift-1 9s ease-in-out infinite; }
+.node-anim-1 { animation: bg-node-drift-2 11s ease-in-out infinite; }
+.node-anim-2 { animation: bg-node-drift-3 13s ease-in-out infinite; }
+
+/* 2. Eyebrow Badge */
+@keyframes badge-gentle-fade {
+  0% {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.hero-anim-badge {
+  opacity: 0;
+  animation: badge-gentle-fade 0.55s cubic-bezier(0.16, 1, 0.3, 1) 0.05s forwards;
+}
+
+.hero-eyebrow-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  background: #D1FAE5;
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  padding: 0.4rem 1rem;
+  border-radius: 999px;
+  font-size: 0.76rem;
+  font-weight: 800;
+  color: #064E3B;
+  letter-spacing: 0.1em;
+  margin-bottom: 1.25rem;
+  box-shadow: 0 2px 10px rgba(16, 185, 129, 0.12);
+  transition: all 0.25s ease;
+  user-select: none;
+}
+
+.hero-eyebrow-badge:hover {
+  border-color: rgba(16, 185, 129, 0.6);
+  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.2);
+  transform: translateY(-1px);
+}
+
+.hero-radar-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #10B981;
+  box-shadow: 0 0 8px #10B981;
+  animation: radar-pulse 2.2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* 3. CINEMATIC MASKED TEXT REVEAL */
+.hero-heading-root {
+  font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif;
+  font-size: clamp(3rem, 5.2vw, 4.85rem);
+  font-weight: 800;
+  line-height: 1.02;
+  letter-spacing: -0.025em;
+  margin-bottom: 1.25rem;
+}
+
+/* Masking Containers */
+.hero-mask-line {
+  display: block;
+  overflow: hidden;
+  position: relative;
+  line-height: 1.06;
+  padding-bottom: 0.12em;
+}
+
+/* Initial Hidden State */
+.hero-text-line {
+  display: inline-block;
+  opacity: 0;
+  transform: translateY(100%);
+  filter: blur(8px);
+  will-change: transform, opacity, filter;
+}
+
+/* Line 1: "Trust Every" Reveal */
+.hero-revealed .hero-line-1 {
+  animation: cinematic-reveal-line1 0.34s cubic-bezier(0.16, 1, 0.3, 1) 0.1s forwards;
+}
+
+@keyframes cinematic-reveal-line1 {
+  0% {
+    opacity: 0;
+    transform: translateY(100%);
+    filter: blur(8px);
+  }
+  60% {
+    opacity: 0.9;
+    filter: blur(2px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0%);
+    filter: blur(0px);
+  }
+}
+
+.hero-title-white {
+  display: inline-block;
+  color: #111827;
+  background: linear-gradient(180deg, #111827 0%, #1E293B 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  letter-spacing: -0.025em;
+}
+
+/* Line 2: "Measure." Reveal */
+.hero-revealed .hero-line-2 {
+  animation: cinematic-reveal-line2 0.36s cubic-bezier(0.16, 1, 0.3, 1) 0.45s forwards;
+}
+
+@keyframes cinematic-reveal-line2 {
+  0% {
+    opacity: 0;
+    transform: translateY(100%);
+    filter: blur(8px);
+  }
+  60% {
+    opacity: 0.9;
+    filter: blur(2px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0%);
+    filter: blur(0px);
+  }
+}
+
+/* "Measure." Deep Teal to Mint Gradient */
+.hero-measure-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.hero-measure-word {
+  position: relative;
+  display: inline-block;
+  background: linear-gradient(135deg, #064E3B 0%, #0D9488 55%, #10B981 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  transition: text-shadow 0.35s ease;
+}
+
+/* Subtle final emerald glow */
+.hero-revealed .hero-measure-word {
+  animation: measure-subtle-glow 0.4s ease-out 0.85s forwards;
+}
+
+@keyframes measure-subtle-glow {
+  0% {
+    text-shadow: 0 0 0px transparent;
+  }
+  100% {
+    text-shadow: 0 0 24px rgba(16, 185, 129, 0.22);
+  }
+}
+
+/* Single 400ms Light Sweep Across "Measure." from Left to Right */
+.hero-measure-sweep-container {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.hero-measure-sweep {
+  position: absolute;
+  top: 0;
+  left: -70%;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.45) 50%,
+    transparent 100%
+  );
+  transform: skewX(-20deg);
+  opacity: 0;
+}
+
+.hero-revealed .hero-measure-sweep {
+  animation: single-light-sweep 0.45s cubic-bezier(0.16, 1, 0.3, 1) 0.85s 1 forwards;
+}
+
+@keyframes single-light-sweep {
+  0% {
+    left: -70%;
+    opacity: 0;
+  }
+  30% {
+    opacity: 0.75;
+  }
+  70% {
+    opacity: 0.75;
+  }
+  100% {
+    left: 140%;
+    opacity: 0;
+  }
+}
+
+.hero-measure-wrapper:hover .hero-measure-word {
+  text-shadow: 0 0 30px rgba(16, 185, 129, 0.35);
+}
+
+/* 4. Subtitle, CTAs & Trust Indicators Staggered Reveal */
+@keyframes content-stagger-fade {
+  0% {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.hero-subtitle-text {
+  font-size: 1.12rem;
+  color: #475569;
+  line-height: 1.6;
+  margin-bottom: 2rem;
+  max-width: 520px;
+  letter-spacing: -0.005em;
+  opacity: 0;
+}
+
+.hero-revealed .hero-anim-subtitle {
+  animation: content-stagger-fade 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.82s forwards;
+}
+
+.hero-anim-cta {
+  opacity: 0;
+}
+
+.hero-revealed .hero-anim-cta {
+  animation: content-stagger-fade 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.94s forwards;
+}
+
+.hero-anim-trust {
+  opacity: 0;
+}
+
+.hero-revealed .hero-anim-trust {
+  animation: content-stagger-fade 0.5s cubic-bezier(0.16, 1, 0.3, 1) 1.05s forwards;
+}
+
+/* 5. Button Micro-Physics */
+.hero-cta-primary {
+  background: #EA580C;
+  color: #FFFFFF !important;
+  box-shadow: 0 4px 16px rgba(234, 88, 12, 0.25);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-cta-primary:hover {
+  background: #C2410C;
+  box-shadow: 0 6px 22px rgba(234, 88, 12, 0.35);
+  transform: translateY(-2px);
+}
+
+.hero-cta-secondary {
+  background: #FFFFFF;
+  color: #064E3B !important;
+  border: 1px solid #CBD5E1;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.hero-cta-secondary:hover {
+  background: #F0FDFA;
+  box-shadow: 0 4px 14px rgba(15, 118, 110, 0.15);
+  border-color: #0F766E !important;
+  transform: translateY(-2px);
+}
+
+/* 6. Trust Indicator Micro-Interactions */
+.trust-indicator-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  transition: transform 0.2s ease;
+  user-select: none;
+}
+
+.trust-indicator-item:hover {
+  transform: translateY(-1px);
+}
+
+.trust-indicator-icon-box {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: #D1FAE5;
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.25s ease;
+}
+
+.trust-indicator-item:hover .trust-indicator-icon-box {
+  border-color: rgba(16, 185, 129, 0.6);
+  box-shadow: 0 0 14px rgba(16, 185, 129, 0.25);
+}
+
+/* 7. Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+  .hero-anim-badge,
+  .hero-anim-subtitle,
+  .hero-anim-cta,
+  .hero-anim-trust,
+  .hero-revealed .hero-line-1,
+  .hero-revealed .hero-line-2,
+  .hero-revealed .hero-measure-sweep,
+  .hero-revealed .hero-measure-word {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+    filter: none !important;
+  }
+
+  .node-anim-0,
+  .node-anim-1,
+  .node-anim-2 {
+    animation: none !important;
+  }
+}
