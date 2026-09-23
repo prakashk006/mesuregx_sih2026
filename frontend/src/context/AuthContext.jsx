@@ -73,7 +73,12 @@ export function AuthProvider({ children }) {
 
   const isBusiness = user?.role === 'BUSINESS_OWNER';
   const isOfficer = user?.role === 'OFFICER';
+  const isGatc = user?.role === 'GATC';
   const isAdmin = user?.role === 'ADMIN';
+
+  const registerGatc = async (formData) => {
+    return await api.post('/auth/register-gatc', formData);
+  };
 
   return (
     <AuthContext.Provider
@@ -84,10 +89,12 @@ export function AuthProvider({ children }) {
         loading,
         login,
         register,
+        registerGatc,
         logout,
         refreshUser,
         isBusiness,
         isOfficer,
+        isGatc,
         isAdmin,
       }}
     >
@@ -103,3 +110,4 @@ export function useAuth() {
   }
   return context;
 }
+

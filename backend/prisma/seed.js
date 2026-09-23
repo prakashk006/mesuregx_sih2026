@@ -16,12 +16,14 @@ async function main() {
   await prisma.evidence.deleteMany({});
   await prisma.measurement.deleteMany({});
   await prisma.verification.deleteMany({});
+  await prisma.assignmentHistory.deleteMany({});
   await prisma.assignment.deleteMany({});
   await prisma.verificationApplication.deleteMany({});
   await prisma.instrument.deleteMany({});
   await prisma.verificationRule.deleteMany({});
   await prisma.instrumentType.deleteMany({});
   await prisma.officer.deleteMany({});
+  await prisma.gatc.deleteMany({});
   await prisma.business.deleteMany({});
   await prisma.user.deleteMany({});
 
@@ -29,6 +31,7 @@ async function main() {
   const adminPassword = await bcrypt.hash('Admin@123', salt);
   const officerPassword = await bcrypt.hash('Officer@123', salt);
   const businessPassword = await bcrypt.hash('Business@123', salt);
+  const gatcPassword = await bcrypt.hash('Gatc@123', salt);
 
   // 1. Admin User
   const adminUser = await prisma.user.create({
@@ -115,6 +118,100 @@ async function main() {
       designation: 'Assistant Controller of Legal Metrology',
       badgeNumber: 'LM-TN-MDU-033',
       status: 'ACTIVE',
+    },
+  });
+
+  // 2B. Government Approved Test Centres (GATC)
+  const gatcUser1 = await prisma.user.create({
+    data: {
+      email: 'gatc@mesuregx.demo',
+      passwordHash: gatcPassword,
+      name: 'National Test House - Southern Regional Lab',
+      phone: '+91 94421 88001',
+      role: 'GATC',
+      status: 'ACTIVE',
+    },
+  });
+
+  const gatc1 = await prisma.gatc.create({
+    data: {
+      userId: gatcUser1.id,
+      gatcCode: 'GATC-TN-001',
+      name: 'National Test House - Southern Regional Lab',
+      contactPerson: 'Dr. S. K. Ramanathan',
+      email: 'gatc@mesuregx.demo',
+      phone: '+91 94421 88001',
+      address: 'Industrial Estate, Civil Aerodrome Post',
+      city: 'Coimbatore',
+      district: 'Coimbatore',
+      state: 'Tamil Nadu',
+      pincode: '641014',
+      authorizationNo: 'GATC-AUTH-2026-TN-042',
+      validTill: new Date('2028-12-31T23:59:59Z'),
+      status: 'ACTIVE',
+      categories: 'Non-Automatic Weighing Instruments, Fuel Dispensers, Weighbridges',
+    },
+  });
+
+  const gatcUser2 = await prisma.user.create({
+    data: {
+      email: 'gatc.chennai@mesuregx.demo',
+      passwordHash: gatcPassword,
+      name: 'Apex Legal Metrology Standards Laboratory',
+      phone: '+91 98401 77112',
+      role: 'GATC',
+      status: 'ACTIVE',
+    },
+  });
+
+  const gatc2 = await prisma.gatc.create({
+    data: {
+      userId: gatcUser2.id,
+      gatcCode: 'GATC-TN-002',
+      name: 'Apex Legal Metrology Standards Laboratory',
+      contactPerson: 'Er. M. Vasanth',
+      email: 'gatc.chennai@mesuregx.demo',
+      phone: '+91 98401 77112',
+      address: 'Guindy Industrial Estate',
+      city: 'Chennai',
+      district: 'Chennai',
+      state: 'Tamil Nadu',
+      pincode: '600032',
+      authorizationNo: 'GATC-AUTH-2026-TN-018',
+      validTill: new Date('2027-11-30T23:59:59Z'),
+      status: 'ACTIVE',
+      categories: 'Precision Analytical Balances, Mass Standards, Platform Scales',
+    },
+  });
+
+  const gatcUser3 = await prisma.user.create({
+    data: {
+      email: 'gatc.salem@mesuregx.demo',
+      passwordHash: gatcPassword,
+      name: 'Kaveri Industrial Calibration & Testing Centre',
+      phone: '+91 94432 99445',
+      role: 'GATC',
+      status: 'PENDING_APPROVAL',
+    },
+  });
+
+  const gatc3 = await prisma.gatc.create({
+    data: {
+      userId: gatcUser3.id,
+      gatcCode: 'GATC-TN-003',
+      name: 'Kaveri Industrial Calibration & Testing Centre',
+      contactPerson: 'P. Ramesh Kumar',
+      email: 'gatc.salem@mesuregx.demo',
+      phone: '+91 94432 99445',
+      address: 'Steel Plant Road',
+      city: 'Salem',
+      district: 'Salem',
+      state: 'Tamil Nadu',
+      pincode: '636013',
+      authorizationNo: 'GATC-AUTH-2026-TN-091',
+      validTill: new Date('2027-06-30T23:59:59Z'),
+      status: 'PENDING_APPROVAL',
+      categories: 'Heavy Industrial Weighbridges, Crane Scales',
     },
   });
 
@@ -739,6 +836,268 @@ async function main() {
       qrCodeData: 'http://localhost:5173/verify/CERT-2024-000045',
       digitalSignature: 'SHA256-RSA:998877665544332211aabbccddeeff0011223344',
     },
+  });
+
+  // 7B. GATC Applications & Verification Workflow
+  // App 11: Assigned to GATC (Pending Test acceptance)
+  const app11 = await prisma.verificationApplication.create({
+    data: {
+      applicationNumber: 'APP-2026-000011',
+      businessId: business3.id,
+      instrumentId: inst4.id,
+      applicationType: 'Initial Verification',
+      preferredDate: new Date('2026-09-28'),
+      location: '88 Avinashi Road, Kumaran Nagar, Tiruppur',
+      remarks: 'Laboratory calibration requested at Government Approved Test Centre for precision yarn balance',
+      status: 'GATC_ASSIGNED',
+      createdAt: new Date('2026-09-20T10:00:00Z'),
+    },
+  });
+
+  await prisma.assignment.create({
+    data: {
+      applicationId: app11.id,
+      assignedAuthority: 'GATC',
+      gatcId: gatc1.id,
+      scheduledDate: new Date('2026-09-28T10:00:00Z'),
+      scheduledTime: '11:00 AM',
+      location: 'National Test House - Southern Regional Lab, Coimbatore',
+      instructions: 'Carry out precision repeatability and eccentricity testing as per OIML R 76-1 accuracy Class II.',
+      status: 'PENDING',
+    },
+  });
+
+  await prisma.assignmentHistory.create({
+    data: {
+      applicationId: app11.id,
+      authorityType: 'GATC',
+      gatcId: gatc1.id,
+      gatcName: gatc1.name,
+      action: 'ASSIGNED',
+      reason: 'Allocated to GATC for high-precision analytical scale verification',
+      scheduledDate: new Date('2026-09-28T10:00:00Z'),
+      assignedBy: 'Dr. A. Swaminathan (Admin)',
+    },
+  });
+
+  // App 12: GATC In Progress (Accepted & Reassigned from LMO with full history)
+  const app12 = await prisma.verificationApplication.create({
+    data: {
+      applicationNumber: 'APP-2026-000012',
+      businessId: business5.id,
+      instrumentId: inst6.id,
+      applicationType: 'Periodic Verification',
+      preferredDate: new Date('2026-09-25'),
+      location: '220 Trichy Road, Singanallur, Coimbatore',
+      remarks: 'High Flow Diesel Dispenser heavy volume test',
+      status: 'GATC_IN_PROGRESS',
+      createdAt: new Date('2026-09-18T09:30:00Z'),
+    },
+  });
+
+  await prisma.assignment.create({
+    data: {
+      applicationId: app12.id,
+      assignedAuthority: 'GATC',
+      gatcId: gatc1.id,
+      scheduledDate: new Date('2026-09-25T14:00:00Z'),
+      scheduledTime: '02:00 PM',
+      location: 'Singanallur Fuel Depot Terminal Island 2',
+      instructions: 'Volumetric test measure 20L / 50L certified reference vessel testing.',
+      status: 'IN_PROGRESS',
+    },
+  });
+
+  await prisma.assignmentHistory.createMany({
+    data: [
+      {
+        applicationId: app12.id,
+        authorityType: 'LMO',
+        officerId: officer1.id,
+        officerName: officer1.name,
+        action: 'ASSIGNED',
+        reason: 'Initial assignment to local LMO jurisdiction',
+        scheduledDate: new Date('2026-09-22T10:00:00Z'),
+        assignedBy: 'Dr. A. Swaminathan (Admin)',
+        assignedAt: new Date('2026-09-19T11:00:00Z'),
+      },
+      {
+        applicationId: app12.id,
+        authorityType: 'GATC',
+        officerId: officer1.id,
+        officerName: officer1.name,
+        gatcId: gatc1.id,
+        gatcName: gatc1.name,
+        action: 'REASSIGNED',
+        reason: 'LMO engaged in regional enforcement drive; reassigned to GATC for expedited verification.',
+        scheduledDate: new Date('2026-09-25T14:00:00Z'),
+        assignedBy: 'Dr. A. Swaminathan (Admin)',
+        assignedAt: new Date('2026-09-21T15:30:00Z'),
+      },
+      {
+        applicationId: app12.id,
+        authorityType: 'GATC',
+        gatcId: gatc1.id,
+        gatcName: gatc1.name,
+        action: 'ACCEPTED',
+        reason: 'Assignment accepted by National Test House testing lab',
+        scheduledDate: new Date('2026-09-25T14:00:00Z'),
+        assignedBy: 'Dr. S. K. Ramanathan (GATC)',
+        assignedAt: new Date('2026-09-22T09:15:00Z'),
+      },
+    ],
+  });
+
+  // App 13: SUBMITTED (Ready for Admin Allocation - LMO vs GATC selection)
+  const app13 = await prisma.verificationApplication.create({
+    data: {
+      applicationNumber: 'APP-2026-000013',
+      businessId: business1.id,
+      instrumentId: inst10.id,
+      applicationType: 'Initial Verification',
+      preferredDate: new Date('2026-10-02'),
+      location: '42 Cross Cut Road, Gandhipuram, Coimbatore',
+      remarks: 'New Crown Metrology commercial scale verification',
+      status: 'SUBMITTED',
+      createdAt: new Date('2026-09-22T16:00:00Z'),
+    },
+  });
+
+  // App 14: Completed GATC Verification with Certificate & QR
+  const app14 = await prisma.verificationApplication.create({
+    data: {
+      applicationNumber: 'APP-2026-000014',
+      businessId: business4.id,
+      instrumentId: inst7.id,
+      applicationType: 'Periodic Verification',
+      preferredDate: new Date('2026-09-10'),
+      location: '104 DB Road, RS Puram, Coimbatore',
+      remarks: 'Annual laboratory calibration conducted by GATC',
+      status: 'CERTIFICATE_ISSUED',
+      createdAt: new Date('2026-09-05T08:30:00Z'),
+    },
+  });
+
+  await prisma.assignment.create({
+    data: {
+      applicationId: app14.id,
+      assignedAuthority: 'GATC',
+      gatcId: gatc1.id,
+      scheduledDate: new Date('2026-09-10T11:00:00Z'),
+      scheduledTime: '11:00 AM',
+      location: 'National Test House - Southern Regional Lab, Coimbatore',
+      instructions: 'Complete full scale testing up to 15kg with calibrated Class M1 weights.',
+      status: 'COMPLETED',
+    },
+  });
+
+  const verif14 = await prisma.verification.create({
+    data: {
+      applicationId: app14.id,
+      verifiedByType: 'GATC',
+      gatcId: gatc1.id,
+      verificationDate: new Date('2026-09-10T13:00:00Z'),
+      latitude: 11.0284,
+      longitude: 77.0312,
+      locationAccuracy: 5.0,
+      locationAddress: 'National Test House, Industrial Estate, Coimbatore - 641014',
+      overallResult: 'PASS',
+      notes: 'Instrument conforms strictly to OIML R 76-1 specifications for Class III Non-Automatic Weighing Instruments. Electronic calibration verified.',
+      status: 'REVIEWED',
+    },
+  });
+
+  await prisma.measurement.createMany({
+    data: [
+      {
+        verificationId: verif14.id,
+        testNumber: 1,
+        referenceValue: 0.0,
+        observedValue: 0.0,
+        error: 0.0,
+        percentageError: 0.0,
+        allowedError: 0.002,
+        result: 'PASS',
+        remarks: 'Zero load indication exact',
+      },
+      {
+        verificationId: verif14.id,
+        testNumber: 2,
+        referenceValue: 5.0,
+        observedValue: 5.0,
+        error: 0.0,
+        percentageError: 0.0,
+        allowedError: 0.005,
+        result: 'PASS',
+        remarks: 'Mid-range linearity verified',
+      },
+      {
+        verificationId: verif14.id,
+        testNumber: 3,
+        referenceValue: 15.0,
+        observedValue: 15.002,
+        error: 0.002,
+        percentageError: 0.013,
+        allowedError: 0.010,
+        result: 'PASS',
+        remarks: 'Maximum capacity test within MPE',
+      },
+    ],
+  });
+
+  await prisma.certificate.create({
+    data: {
+      certificateNumber: 'CERT-2026-GATC-001',
+      applicationId: app14.id,
+      instrumentId: inst7.id,
+      businessId: business4.id,
+      issuedByType: 'GATC',
+      gatcId: gatc1.id,
+      gatcName: 'National Test House - Southern Regional Lab',
+      issueDate: new Date('2026-09-10T15:00:00Z'),
+      expiryDate: new Date('2027-09-09T23:59:59Z'),
+      status: 'VALID',
+      qrCodeData: 'http://localhost:5173/verify/CERT-2026-GATC-001',
+      digitalSignature: 'SHA256-GATC:9a8b7c6d5e4f3a2b1c0d9e8f7a6b5c4d3e2f1a0b',
+    },
+  });
+
+  await prisma.assignmentHistory.createMany({
+    data: [
+      {
+        applicationId: app14.id,
+        authorityType: 'GATC',
+        gatcId: gatc1.id,
+        gatcName: gatc1.name,
+        action: 'ASSIGNED',
+        reason: 'Assigned to GATC for comprehensive lab re-verification',
+        scheduledDate: new Date('2026-09-10T11:00:00Z'),
+        assignedBy: 'Dr. A. Swaminathan (Admin)',
+        assignedAt: new Date('2026-09-06T10:00:00Z'),
+      },
+      {
+        applicationId: app14.id,
+        authorityType: 'GATC',
+        gatcId: gatc1.id,
+        gatcName: gatc1.name,
+        action: 'ACCEPTED',
+        reason: 'Accepted by National Test House',
+        scheduledDate: new Date('2026-09-10T11:00:00Z'),
+        assignedBy: 'Dr. S. K. Ramanathan (GATC)',
+        assignedAt: new Date('2026-09-07T14:20:00Z'),
+      },
+      {
+        applicationId: app14.id,
+        authorityType: 'GATC',
+        gatcId: gatc1.id,
+        gatcName: gatc1.name,
+        action: 'COMPLETED',
+        reason: 'Verification completed with PASS result and certificate issued',
+        scheduledDate: new Date('2026-09-10T11:00:00Z'),
+        assignedBy: 'Dr. S. K. Ramanathan (GATC)',
+        assignedAt: new Date('2026-09-10T15:00:00Z'),
+      },
+    ],
   });
 
   // 8. Notifications

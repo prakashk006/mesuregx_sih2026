@@ -29,6 +29,8 @@ export default function LoginPage() {
         navigate('/admin/dashboard');
       } else if (user.role === 'OFFICER') {
         navigate('/officer/dashboard');
+      } else if (user.role === 'GATC') {
+        navigate('/gatc/dashboard');
       } else {
         navigate('/business/dashboard');
       }
@@ -191,11 +193,11 @@ export default function LoginPage() {
           >
             ⚡ Quick Demo Auto-Fill
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.4rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.4rem' }}>
             <button
               type="button"
               className="btn btn-outline btn-sm"
-              style={{ fontSize: '0.75rem' }}
+              style={{ fontSize: '0.75rem', padding: '0.4rem 0.2rem' }}
               onClick={() => fillDemoAccount('business@mesuregx.demo', 'Business@123')}
             >
               Business
@@ -203,7 +205,7 @@ export default function LoginPage() {
             <button
               type="button"
               className="btn btn-outline btn-sm"
-              style={{ fontSize: '0.75rem' }}
+              style={{ fontSize: '0.75rem', padding: '0.4rem 0.2rem' }}
               onClick={() => fillDemoAccount('officer@mesuregx.demo', 'Officer@123')}
             >
               Officer
@@ -211,7 +213,15 @@ export default function LoginPage() {
             <button
               type="button"
               className="btn btn-outline btn-sm"
-              style={{ fontSize: '0.75rem' }}
+              style={{ fontSize: '0.75rem', padding: '0.4rem 0.2rem', borderColor: '#0ea5e9', color: '#38bdf8' }}
+              onClick={() => fillDemoAccount('gatc@mesuregx.demo', 'Gatc@123')}
+            >
+              GATC
+            </button>
+            <button
+              type="button"
+              className="btn btn-outline btn-sm"
+              style={{ fontSize: '0.75rem', padding: '0.4rem 0.2rem' }}
               onClick={() => fillDemoAccount('admin@mesuregx.demo', 'Admin@123')}
             >
               Admin

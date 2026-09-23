@@ -4,6 +4,7 @@ const authController = require('../controllers/authController');
 const { authenticate } = require('../middleware/auth');
 
 router.post('/register', authController.register);
+router.post('/register-gatc', authController.registerGatc);
 router.post('/login', authController.login);
 router.get('/me', authenticate, authController.getMe);
 router.post('/logout', authenticate, authController.logout);

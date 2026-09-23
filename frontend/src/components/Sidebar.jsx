@@ -17,6 +17,8 @@ import {
   LogOut,
   CreditCard,
   AlertCircle,
+  Layers,
+  FlaskConical,
 } from 'lucide-react';
 
 export default function Sidebar() {
@@ -167,6 +169,40 @@ export default function Sidebar() {
           </>
         )}
 
+        {/* GATC TEST CENTRE MENU */}
+        {role === 'GATC' && (
+          <>
+            <NavLink
+              to="/gatc/dashboard"
+              className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
+            >
+              <LayoutDashboard size={18} />
+              <span>GATC Dashboard</span>
+            </NavLink>
+            <NavLink
+              to="/gatc/applications"
+              className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
+            >
+              <ClipboardCheck size={18} />
+              <span>Verification Queue</span>
+            </NavLink>
+            <NavLink
+              to="/gatc/history"
+              className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
+            >
+              <Award size={18} />
+              <span>Testing Records</span>
+            </NavLink>
+            <NavLink
+              to="/gatc/profile"
+              className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
+            >
+              <Building2 size={18} />
+              <span>Centre Profile</span>
+            </NavLink>
+          </>
+        )}
+
         {/* ADMIN MENU */}
         {role === 'ADMIN' && (
           <>
@@ -190,6 +226,13 @@ export default function Sidebar() {
             >
               <ClipboardCheck size={18} />
               <span>Officers</span>
+            </NavLink>
+            <NavLink
+              to="/admin/gatc"
+              className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
+            >
+              <FlaskConical size={18} />
+              <span>GATC Test Centres</span>
             </NavLink>
             <NavLink
               to="/admin/instruments"
@@ -273,7 +316,7 @@ export default function Sidebar() {
             {user?.name || 'User'}
           </span>
           <span style={{ fontSize: '0.7rem', color: '#64748b' }}>
-            {user?.officer?.officerCode || user?.business?.city || user?.role}
+            {user?.gatc?.gatcCode || user?.officer?.officerCode || user?.business?.city || user?.role}
           </span>
         </div>
         <button

@@ -49,6 +49,13 @@ import EnforcementDetailPage from './pages/enforcement/EnforcementDetailPage';
 import BusinessEnforcementPage from './pages/business/BusinessEnforcementPage';
 import SystemArchitecturePage from './pages/docs/SystemArchitecturePage';
 
+// GATC Pages
+import GatcDashboardPage from './pages/gatc/GatcDashboardPage';
+import GatcQueuePage from './pages/gatc/GatcQueuePage';
+import GatcTestWorkflowPage from './pages/gatc/GatcTestWorkflowPage';
+import GatcProfilePage from './pages/gatc/GatcProfilePage';
+import AdminGatcManagementPage from './pages/admin/AdminGatcManagementPage';
+
 // Protected Route Guard
 function ProtectedRoute({ children, allowedRoles = [] }) {
   const { user, isAuthenticated, loading } = useAuth();
@@ -69,6 +76,7 @@ function ProtectedRoute({ children, allowedRoles = [] }) {
     // Redirect to their default dashboard
     if (user?.role === 'ADMIN') return <Navigate to="/admin/dashboard" replace />;
     if (user?.role === 'OFFICER') return <Navigate to="/officer/dashboard" replace />;
+    if (user?.role === 'GATC') return <Navigate to="/gatc/dashboard" replace />;
     return <Navigate to="/business/dashboard" replace />;
   }
 
@@ -466,6 +474,60 @@ export default function App() {
             element={
               <ProtectedRoute allowedRoles={['ADMIN']}>
                 <EnforcementDashboardPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/gatc"
+            element={
+              <ProtectedRoute allowedRoles={['ADMIN']}>
+                <AdminGatcManagementPage />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* GATC Test Centre Routes */}
+          <Route
+            path="/gatc"
+            element={<Navigate to="/gatc/dashboard" replace />}
+          />
+          <Route
+            path="/gatc/dashboard"
+            element={
+              <ProtectedRoute allowedRoles={['GATC', 'ADMIN']}>
+                <GatcDashboardPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/gatc/applications"
+            element={
+              <ProtectedRoute allowedRoles={['GATC', 'ADMIN']}>
+                <GatcQueuePage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/gatc/verification/:applicationId"
+            element={
+              <ProtectedRoute allowedRoles={['GATC', 'ADMIN']}>
+                <GatcTestWorkflowPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/gatc/history"
+            element={
+              <ProtectedRoute allowedRoles={['GATC', 'ADMIN']}>
+                <GatcQueuePage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/gatc/profile"
+            element={
+              <ProtectedRoute allowedRoles={['GATC', 'ADMIN']}>
+                <GatcProfilePage />
               </ProtectedRoute>
             }
           />

@@ -17,6 +17,7 @@ const reportRoutes = require('./routes/reportRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
 const complaintRoutes = require('./routes/complaintRoutes');
 const enforcementRoutes = require('./routes/enforcementRoutes');
+const gatcRoutes = require('./routes/gatcRoutes');
 
 const errorHandler = require('./middleware/errorHandler');
 
@@ -64,6 +65,7 @@ app.use('/api/reports', reportRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/complaints', complaintRoutes);
 app.use('/api/enforcement', enforcementRoutes);
+app.use('/api/gatc', gatcRoutes);
 
 // Fallback 404 for API
 app.use('/api/*', (req, res) => {

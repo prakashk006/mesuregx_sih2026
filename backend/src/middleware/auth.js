@@ -22,6 +22,7 @@ async function authenticate(req, res, next) {
       include: {
         business: true,
         officer: true,
+        gatc: true,
       },
     });
 
@@ -89,7 +90,7 @@ async function optionalAuthenticate(req, res, next) {
       const decoded = jwt.verify(token, JWT_SECRET);
       const user = await prisma.user.findUnique({
         where: { id: decoded.userId },
-        include: { business: true, officer: true },
+        include: { business: true, officer: true, gatc: true },
       });
       if (user && user.status === 'ACTIVE') {
         req.user = user;

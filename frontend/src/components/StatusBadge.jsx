@@ -18,21 +18,24 @@ export default function StatusBadge({ status, size = 'md' }) {
     case 'CERTIFICATE_ISSUED':
     case 'RESOLVED':
     case 'CLOSED':
+    case 'ACCEPTED':
+    case 'GATC_COMPLETED':
       icon = <CheckCircle size={12} />;
       className = 'badge-valid';
-      label = clean === 'CERTIFICATE_ISSUED' ? 'Certified' : clean === 'RESOLVED' ? 'Resolved' : clean === 'CLOSED' ? 'Closed' : status;
+      label = clean === 'CERTIFICATE_ISSUED' ? 'Certified' : clean === 'RESOLVED' ? 'Resolved' : clean === 'CLOSED' ? 'Closed' : clean === 'ACCEPTED' ? 'Accepted' : clean === 'GATC_COMPLETED' ? 'GATC Completed' : status;
       break;
 
     case 'EXPIRING_SOON':
     case 'SCHEDULED':
     case 'ASSIGNED':
+    case 'GATC_ASSIGNED':
     case 'WARNING':
     case 'ACTION_PENDING':
     case 'NOTICE_ISSUED':
     case 'HIGH':
       icon = <AlertTriangle size={12} />;
       className = 'badge-expiring_soon';
-      label = clean === 'EXPIRING_SOON' ? 'Expiring Soon' : clean === 'NOTICE_ISSUED' ? 'Notice Issued' : clean === 'ACTION_PENDING' ? 'Action Pending' : status;
+      label = clean === 'EXPIRING_SOON' ? 'Expiring Soon' : clean === 'GATC_ASSIGNED' ? 'GATC Assigned' : clean === 'NOTICE_ISSUED' ? 'Notice Issued' : clean === 'ACTION_PENDING' ? 'Action Pending' : status;
       break;
 
     case 'EXPIRED':
@@ -44,16 +47,17 @@ export default function StatusBadge({ status, size = 'md' }) {
     case 'CRITICAL':
       icon = clean === 'REVOKED' || clean === 'CRITICAL' ? <ShieldAlert size={12} /> : <XCircle size={12} />;
       className = 'badge-expired';
-      label = clean === 'VIOLATION_CONFIRMED' ? 'Violation Confirmed' : status;
+      label = clean === 'VIOLATION_CONFIRMED' ? 'Violation Confirmed' : clean === 'REJECTED' ? 'Rejected / Reassignment' : status;
       break;
 
     case 'FIELD_VERIFICATION':
+    case 'GATC_IN_PROGRESS':
     case 'OFFICER_REVIEW':
     case 'INSPECTION_REQUIRED':
     case 'FOLLOW_UP':
       icon = <FileCheck size={12} />;
       className = 'badge-field_verification';
-      label = clean === 'FIELD_VERIFICATION' ? 'In Field Inspection' : clean === 'INSPECTION_REQUIRED' ? 'Inspection Required' : clean === 'FOLLOW_UP' ? 'Follow-Up' : 'Officer Review';
+      label = clean === 'FIELD_VERIFICATION' ? 'In Field Inspection' : clean === 'GATC_IN_PROGRESS' ? 'GATC In Progress' : clean === 'INSPECTION_REQUIRED' ? 'Inspection Required' : clean === 'FOLLOW_UP' ? 'Follow-Up' : 'Officer Review';
       break;
 
     case 'OPEN':

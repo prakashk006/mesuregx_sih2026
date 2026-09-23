@@ -16,15 +16,43 @@ model User {
   passwordHash String
   name         String
   phone        String?
-  role         String   @default("BUSINESS_OWNER") // BUSINESS_OWNER, OFFICER, ADMIN
+  role         String   @default("BUSINESS_OWNER") // BUSINESS_OWNER, OFFICER, ADMIN, GATC
   status       String   @default("ACTIVE") // ACTIVE, INACTIVE, SUSPENDED
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
   business     Business?
   officer      Officer?
+  gatc         Gatc?
   auditLogs    AuditLog[]
   notifications Notification[]
+}
+
+model Gatc {
+  id               String   @id @default(uuid())
+  userId           String   @unique
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  gatcCode         String   @unique // e.g. GATC-TN-001
+  name             String
+  contactPerson    String
+  email            String
+  phone            String
+  address          String
+  city             String
+  district         String
+  state            String
+  pincode          String
+  authorizationNo  String   @unique // e.g. GATC-AUTH-2026-TN-042
+  validTill        DateTime
+  status           String   @default("PENDING_APPROVAL") // PENDING_APPROVAL, ACTIVE, INACTIVE
+  categories       String   @default("Non-Automatic Weighing Instruments, Flow Meters, Fuel Dispensers")
+  documents        String?  // JSON string of accreditation/authorization documents
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  assignments      Assignment[]
+  verifications    Verification[]
+  certificates     Certificate[]
 }
 
 model Business {
@@ -125,13 +153,14 @@ model VerificationApplication {
   location          String
   remarks           String?
   status            String   @default("SUBMITTED") 
-  // Statuses: SUBMITTED, UNDER_REVIEW, ASSIGNED, SCHEDULED, FIELD_VERIFICATION, OFFICER_REVIEW, APPROVED, REJECTED, CERTIFICATE_ISSUED, EXPIRED
+  // Statuses: SUBMITTED, UNDER_REVIEW, ASSIGNED, GATC_ASSIGNED, SCHEDULED, FIELD_VERIFICATION, GATC_IN_PROGRESS, OFFICER_REVIEW, APPROVED, REJECTED, CERTIFICATE_ISSUED, EXPIRED
   rejectionReason   String?
   retestDate        DateTime?
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 
   assignment        Assignment?
+  assignmentHistory AssignmentHistory[]
   verification      Verification?
   certificate       Certificate?
   payment           Payment?
@@ -141,23 +170,46 @@ model Assignment {
   id                String   @id @default(uuid())
   applicationId     String   @unique
   application       VerificationApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
-  officerId         String
-  officer           Officer  @relation(fields: [officerId], references: [id], onDelete: Cascade)
+  assignedAuthority String   @default("LMO") // LMO or GATC
+  officerId         String?
+  officer           Officer? @relation(fields: [officerId], references: [id], onDelete: SetNull)
+  gatcId            String?
+  gatc              Gatc?    @relation(fields: [gatcId], references: [id], onDelete: SetNull)
   scheduledDate     DateTime
   scheduledTime     String?  // e.g. "10:30 AM"
   location          String
   instructions      String?
-  status            String   @default("PENDING") // PENDING, IN_PROGRESS, COMPLETED, RESCHEDULED
+  status            String   @default("PENDING") // PENDING, ACCEPTED, REJECTED, IN_PROGRESS, COMPLETED, RESCHEDULED
+  rejectionReason   String?
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
+}
+
+model AssignmentHistory {
+  id            String   @id @default(uuid())
+  applicationId String
+  application   VerificationApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  authorityType String   @default("LMO") // LMO or GATC
+  officerId     String?
+  officerName   String?
+  gatcId        String?
+  gatcName      String?
+  action        String   // ASSIGNED, REASSIGNED, ACCEPTED, REJECTED, COMPLETED
+  reason        String?
+  scheduledDate DateTime?
+  assignedBy    String
+  assignedAt    DateTime @default(now())
 }
 
 model Verification {
   id                String   @id @default(uuid())
   applicationId     String   @unique
   application       VerificationApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
-  officerId         String
-  officer           Officer  @relation(fields: [officerId], references: [id], onDelete: Cascade)
+  verifiedByType    String   @default("LMO") // LMO or GATC
+  officerId         String?
+  officer           Officer? @relation(fields: [officerId], references: [id], onDelete: SetNull)
+  gatcId            String?
+  gatc              Gatc?    @relation(fields: [gatcId], references: [id], onDelete: SetNull)
   verificationDate  DateTime @default(now())
   latitude          Float?
   longitude         Float?
@@ -224,8 +276,12 @@ model Certificate {
   instrument        Instrument @relation(fields: [instrumentId], references: [id], onDelete: Cascade)
   businessId        String
   business          Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
-  officerId         String
-  officer           Officer  @relation(fields: [officerId], references: [id], onDelete: Cascade)
+  issuedByType      String   @default("LMO") // LMO or GATC
+  officerId         String?
+  officer           Officer? @relation(fields: [officerId], references: [id], onDelete: SetNull)
+  gatcId            String?
+  gatc              Gatc?    @relation(fields: [gatcId], references: [id], onDelete: SetNull)
+  gatcName          String?
   issueDate         DateTime @default(now())
   expiryDate        DateTime
   status            String   @default("VALID") // VALID, EXPIRING_SOON, EXPIRED, REVOKED

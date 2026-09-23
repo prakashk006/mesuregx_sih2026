@@ -1,8 +1,6 @@
 const http = require('http');
-const app = require('../src/server');
 
-let server;
-const PORT = 5098;
+const PORT = process.env.PORT || 5000;
 
 function request(path, options = {}) {
   return new Promise((resolve, reject) => {
@@ -42,7 +40,6 @@ function request(path, options = {}) {
 async function runEnforcementTests() {
   console.log('--- STARTING MESUREGX ENFORCEMENT MODULE AUTOMATED TESTS ---');
 
-  server = app.listen(PORT);
   let officerToken = '';
   let adminToken = '';
   let businessToken = '';
@@ -211,9 +208,6 @@ async function runEnforcementTests() {
   } catch (err) {
     console.error('\n❌ Enforcement Test Failed:', err.message);
     process.exit(1);
-  } finally {
-    if (server) server.close();
-    process.exit(0);
   }
 }
 

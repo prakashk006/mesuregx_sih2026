@@ -150,6 +150,7 @@ async function login(req, res, next) {
       include: {
         business: true,
         officer: true,
+        gatc: true,
       },
     });
 
@@ -211,7 +212,150 @@ async function login(req, res, next) {
           phone: user.phone,
           business: user.business,
           officer: user.officer,
+          gatc: user.gatc,
         },
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function registerGatc(req, res, next) {
+  try {
+    const {
+      name,
+      contactPerson,
+      email,
+      phone,
+      address,
+      city,
+      district,
+      state,
+      pincode,
+      authorizationNo,
+      categories,
+      password,
+      confirmPassword,
+      documents,
+    } = req.body;
+
+    if (!name || !contactPerson || !email || !phone || !address || !city || !district || !state || !pincode || !authorizationNo || !password) {
+      return res.status(400).json({
+        success: false,
+        message: 'All required fields must be filled.',
+        errorCode: 'VALIDATION_FAILED',
+      });
+    }
+
+    if (password.length < 6) {
+      return res.status(400).json({
+        success: false,
+        message: 'Password must be at least 6 characters long.',
+        errorCode: 'WEAK_PASSWORD',
+      });
+    }
+
+    if (confirmPassword && password !== confirmPassword) {
+      return res.status(400).json({
+        success: false,
+        message: 'Password and Confirm Password do not match.',
+        errorCode: 'PASSWORD_MISMATCH',
+      });
+    }
+
+    const existing = await prisma.user.findUnique({
+      where: { email: email.toLowerCase().trim() },
+    });
+    if (existing) {
+      return res.status(409).json({
+        success: false,
+        message: 'An account with this email address already exists.',
+        errorCode: 'EMAIL_ALREADY_EXISTS',
+      });
+    }
+
+    const existingAuth = await prisma.gatc.findUnique({
+      where: { authorizationNo: authorizationNo.trim() },
+    });
+    if (existingAuth) {
+      return res.status(409).json({
+        success: false,
+        message: 'A test centre with this authorization number already exists.',
+        errorCode: 'AUTH_NO_ALREADY_EXISTS',
+      });
+    }
+
+    const gatcCount = await prisma.gatc.count();
+    const stateCode = (state || 'TN').toUpperCase().includes('TAMIL') ? 'TN' : 'IND';
+    const gatcCode = `GATC-${stateCode}-${String(gatcCount + 1).padStart(3, '0')}`;
+
+    const salt = await bcrypt.genSalt(10);
+    const passwordHash = await bcrypt.hash(password, salt);
+
+    const user = await prisma.user.create({
+      data: {
+        email: email.toLowerCase().trim(),
+        passwordHash,
+        name,
+        phone,
+        role: 'GATC',
+        status: 'ACTIVE',
+        gatc: {
+          create: {
+            gatcCode,
+            name,
+            contactPerson,
+            email: email.toLowerCase().trim(),
+            phone,
+            address,
+            city,
+            district,
+            state,
+            pincode,
+            authorizationNo: authorizationNo.trim(),
+            validTill: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000 * 2),
+            status: 'PENDING_APPROVAL',
+            categories: categories || 'Non-Automatic Weighing Instruments, Flow Meters, Fuel Dispensers',
+            documents: documents ? (typeof documents === 'string' ? documents : JSON.stringify(documents)) : null,
+          },
+        },
+      },
+      include: {
+        gatc: true,
+      },
+    });
+
+    await logAudit({
+      userId: user.id,
+      userRole: 'GATC',
+      action: 'GATC_REGISTERED',
+      entity: 'Gatc',
+      entityId: user.gatc.id,
+      description: `New GATC "${name}" (${gatcCode}) registered by ${contactPerson}. Awaiting Admin approval.`,
+      ipAddress: req.ip,
+    });
+
+    const admins = await prisma.user.findMany({ where: { role: 'ADMIN' } });
+    for (const admin of admins) {
+      await createNotification({
+        userId: admin.id,
+        title: 'New GATC Registration for Approval',
+        message: `${name} (${gatcCode}, ${district}) has registered as an Approved Test Centre and awaits verification.`,
+        type: 'WARNING',
+        link: '/admin/gatc',
+      });
+    }
+
+    res.status(201).json({
+      success: true,
+      message: 'GATC registration submitted successfully. Your account is pending administrative verification and approval.',
+      data: {
+        userId: user.id,
+        gatcId: user.gatc.id,
+        gatcCode: user.gatc.gatcCode,
+        name: user.gatc.name,
+        status: user.gatc.status,
       },
     });
   } catch (err) {
@@ -233,6 +377,7 @@ async function getMe(req, res, next) {
         createdAt: true,
         business: true,
         officer: true,
+        gatc: true,
       },
     });
 
@@ -269,6 +414,7 @@ async function logout(req, res, next) {
 
 module.exports = {
   register,
+  registerGatc,
   login,
   getMe,
   logout,

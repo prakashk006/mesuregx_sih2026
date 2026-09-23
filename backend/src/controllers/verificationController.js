@@ -72,6 +72,7 @@ async function getVerificationByAppId(req, res, next) {
         measurements: { orderBy: { testNumber: 'asc' } },
         evidence: { orderBy: { uploadedAt: 'desc' } },
         officer: true,
+        gatc: true,
         application: {
           include: {
             business: true,
@@ -132,26 +133,38 @@ async function submitVerification(req, res, next) {
       });
     }
 
-    // Identify officer
-    let officerId;
-    if (req.user.role === 'OFFICER') {
+    // Identify verifying entity (LMO Officer or GATC Centre)
+    let officerId = null;
+    let gatcId = null;
+    let verifiedByType = 'LMO';
+
+    if (req.user.role === 'GATC') {
+      verifiedByType = 'GATC';
+      const gatc = await prisma.gatc.findUnique({ where: { userId: req.user.id } });
+      gatcId = gatc ? gatc.id : null;
+    } else if (req.user.role === 'OFFICER') {
+      verifiedByType = 'LMO';
       const officer = await prisma.officer.findUnique({ where: { userId: req.user.id } });
       officerId = officer ? officer.id : null;
+    } else {
+      const existingAssign = await prisma.assignment.findUnique({ where: { applicationId: application.id } });
+      if (existingAssign?.assignedAuthority === 'GATC') {
+        verifiedByType = 'GATC';
+        gatcId = existingAssign.gatcId;
+      } else {
+        verifiedByType = 'LMO';
+        officerId = existingAssign?.officerId;
+      }
     }
 
-    if (!officerId) {
-      const existingAssign = await prisma.assignment.findUnique({ where: { applicationId: application.id } });
-      officerId = existingAssign?.officerId;
-      if (!officerId) {
-        const defaultOff = await prisma.officer.findFirst({ where: { status: 'ACTIVE' } });
-        officerId = defaultOff?.id;
-      }
+    if (!officerId && !gatcId) {
+      const defaultOff = await prisma.officer.findFirst({ where: { status: 'ACTIVE' } });
+      officerId = defaultOff?.id;
     }
 
     // Evaluate measurements via Rule Engine
     let evalResult = { overallResult: 'PENDING', tests: [] };
     if (measurements.length > 0) {
-      // Check if custom rule exists for this instrument type
       const rule = await prisma.verificationRule.findFirst({
         where: {
           instrumentTypeId: application.instrument.typeId,
@@ -175,7 +188,9 @@ async function submitVerification(req, res, next) {
     const verification = await prisma.verification.upsert({
       where: { applicationId: application.id },
       update: {
+        verifiedByType,
         officerId,
+        gatcId,
         verificationDate: new Date(),
         latitude: latitude ? parseFloat(latitude) : null,
         longitude: longitude ? parseFloat(longitude) : null,
@@ -187,7 +202,9 @@ async function submitVerification(req, res, next) {
       },
       create: {
         applicationId: application.id,
+        verifiedByType,
         officerId,
+        gatcId,
         verificationDate: new Date(),
         latitude: latitude ? parseFloat(latitude) : null,
         longitude: longitude ? parseFloat(longitude) : null,
@@ -218,8 +235,153 @@ async function submitVerification(req, res, next) {
       });
     }
 
-    // Update application status
-    const nextAppStatus = isDraft ? 'FIELD_VERIFICATION' : 'OFFICER_REVIEW';
+    // If GATC submitted non-draft test result:
+    if (verifiedByType === 'GATC' && !isDraft) {
+      const gatc = await prisma.gatc.findUnique({ where: { id: gatcId } });
+
+      if (evalResult.overallResult === 'PASS') {
+        const validityMonths = application.instrument.instrumentType?.defaultValidityMonths || 12;
+        const issueDate = new Date();
+        const expiryDate = new Date();
+        expiryDate.setMonth(expiryDate.getMonth() + validityMonths);
+
+        const certCount = await prisma.certificate.count();
+        const certificateNumber = generateCertificateNumber(certCount + 1);
+        const baseUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+        const qrCodeData = `${baseUrl}/verify/${certificateNumber}`;
+        const digitalSignature = `SHA256-GATC:${Buffer.from(`${certificateNumber}|${application.instrument.customId}|${issueDate.toISOString()}|${gatc?.gatcCode || 'GATC'}`).toString('hex').slice(0, 48)}`;
+
+        const certificate = await prisma.certificate.create({
+          data: {
+            certificateNumber,
+            applicationId: application.id,
+            instrumentId: application.instrumentId,
+            businessId: application.businessId,
+            issuedByType: 'GATC',
+            gatcId: gatc?.id || null,
+            gatcName: gatc?.name || 'Government Approved Test Centre',
+            issueDate,
+            expiryDate,
+            status: 'VALID',
+            qrCodeData,
+            digitalSignature,
+          },
+        });
+
+        await prisma.verificationApplication.update({
+          where: { id: application.id },
+          data: { status: 'CERTIFICATE_ISSUED' },
+        });
+
+        await prisma.instrument.update({
+          where: { id: application.instrumentId },
+          data: {
+            status: 'VERIFIED',
+            currentCertificateId: certificate.id,
+          },
+        });
+
+        await prisma.assignment.updateMany({
+          where: { applicationId: application.id },
+          data: { status: 'COMPLETED' },
+        });
+
+        await prisma.assignmentHistory.create({
+          data: {
+            applicationId: application.id,
+            authorityType: 'GATC',
+            gatcId: gatc?.id,
+            gatcName: gatc?.name,
+            action: 'COMPLETED',
+            reason: `GATC laboratory verification concluded with PASS result. Digital certificate ${certificateNumber} issued.`,
+            assignedBy: `${req.user.name} (GATC)`,
+          },
+        });
+
+        if (application.business && application.business.userId) {
+          await createNotification({
+            userId: application.business.userId,
+            title: `Verification Passed & Certificate Issued: ${certificateNumber}`,
+            message: `${gatc?.name} has verified instrument ${application.instrument.customId}. Digital Certificate ${certificateNumber} is now active.`,
+            type: 'SUCCESS',
+            link: '/business/certificates',
+          });
+        }
+
+        await logAudit({
+          userId: req.user.id,
+          userRole: req.user.role,
+          action: 'GATC_VERIFICATION_COMPLETED',
+          entity: 'Certificate',
+          entityId: certificate.id,
+          description: `GATC ${gatc?.name} successfully completed test for ${application.applicationNumber}. Certificate ${certificateNumber} generated.`,
+          ipAddress: req.ip,
+        });
+
+        return res.json({
+          success: true,
+          message: `GATC verification test completed successfully. Certificate ${certificateNumber} has been generated.`,
+          data: {
+            verification,
+            evaluation: evalResult,
+            certificate,
+          },
+        });
+      } else {
+        // Result is FAIL or PENDING
+        await prisma.verificationApplication.update({
+          where: { id: application.id },
+          data: {
+            status: 'REJECTED',
+            rejectionReason: 'Instrument failed laboratory verification standards at Government Approved Test Centre.',
+          },
+        });
+
+        await prisma.instrument.update({
+          where: { id: application.instrumentId },
+          data: { status: 'REJECTED' },
+        });
+
+        await prisma.assignment.updateMany({
+          where: { applicationId: application.id },
+          data: { status: 'COMPLETED' },
+        });
+
+        await prisma.assignmentHistory.create({
+          data: {
+            applicationId: application.id,
+            authorityType: 'GATC',
+            gatcId: gatc?.id,
+            gatcName: gatc?.name,
+            action: 'COMPLETED',
+            reason: `GATC laboratory verification concluded with FAIL result: ${evalResult.overallResult}`,
+            assignedBy: `${req.user.name} (GATC)`,
+          },
+        });
+
+        if (application.business && application.business.userId) {
+          await createNotification({
+            userId: application.business.userId,
+            title: `Verification Failed: ${application.applicationNumber}`,
+            message: `Instrument ${application.instrument.customId} failed verification at ${gatc?.name}. Re-calibration required.`,
+            type: 'DANGER',
+            link: '/business/applications',
+          });
+        }
+
+        return res.json({
+          success: true,
+          message: 'GATC verification recorded with FAIL result.',
+          data: { verification, evaluation: evalResult },
+        });
+      }
+    }
+
+    // Default LMO flow
+    const nextAppStatus = isDraft
+      ? (verifiedByType === 'GATC' ? 'GATC_IN_PROGRESS' : 'FIELD_VERIFICATION')
+      : 'OFFICER_REVIEW';
+
     await prisma.verificationApplication.update({
       where: { id: application.id },
       data: { status: nextAppStatus },
@@ -294,11 +456,21 @@ async function uploadEvidence(req, res, next) {
     });
 
     if (!verification) {
-      const defaultOfficer = await prisma.officer.findFirst({ where: { status: 'ACTIVE' } });
+      let offId = null;
+      let gId = null;
+      if (req.user.role === 'GATC') {
+        const gatc = await prisma.gatc.findUnique({ where: { userId: req.user.id } });
+        gId = gatc?.id;
+      } else {
+        const defaultOfficer = await prisma.officer.findFirst({ where: { status: 'ACTIVE' } });
+        offId = defaultOfficer?.id;
+      }
       verification = await prisma.verification.create({
         data: {
           applicationId: application.id,
-          officerId: defaultOfficer.id,
+          verifiedByType: req.user.role === 'GATC' ? 'GATC' : 'LMO',
+          officerId: offId,
+          gatcId: gId,
           status: 'DRAFT',
         },
       });
