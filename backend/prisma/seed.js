@@ -7,6 +7,9 @@ async function main() {
   console.log('Seeding MESUREGX database with realistic Legal Metrology demo data...');
 
   // Clean existing data in order of foreign key dependencies
+  await prisma.enforcementEvidence.deleteMany({});
+  await prisma.enforcementAction.deleteMany({});
+  await prisma.enforcementCase.deleteMany({});
   await prisma.auditLog.deleteMany({});
   await prisma.notification.deleteMany({});
   await prisma.certificate.deleteMany({});
@@ -852,6 +855,235 @@ async function main() {
         description: 'Digital Verification Certificate CERT-2026-000001 generated with secure QR payload.',
       },
     ],
+  });
+
+  // 10. Seed Realistic Enforcement Cases
+  console.log('Seeding Enforcement Cases and Statutory Actions...');
+  const enfCase1 = await prisma.enforcementCase.create({
+    data: {
+      caseNumber: 'ENF-2026-000001',
+      businessId: business1.id,
+      instrumentId: inst1.id,
+      applicationId: app1.id,
+      certificateId: cert1.id,
+      officerId: officer1.id,
+      violationType: 'Expired Verification',
+      priority: 'High',
+      status: 'NOTICE_ISSUED',
+      location: '124 Cross Cut Road, Gandhipuram, Coimbatore',
+      district: 'Coimbatore',
+      detectedDate: new Date(Date.now() - 7 * 24 * 3600 * 1000),
+      followUpDate: new Date(Date.now() + 5 * 24 * 3600 * 1000),
+      remarks: 'Periodic re-verification lapsed by 18 days. Physical device continued in commercial trade without current re-stamping seal.',
+      observations: 'Electronic counter scale found displaying weight without valid annual verification seal. Merchant claimed pending vendor technician visit.',
+      actions: {
+        create: [
+          {
+            actionType: 'Notice Issued',
+            description: 'Statutory Notice under Section 24 of Legal Metrology Act issued. Mandated verification within 7 working days.',
+            officerId: officer1.id,
+            officerName: 'R. Natarajan',
+            actionDate: new Date(Date.now() - 3 * 24 * 3600 * 1000),
+            status: 'COMPLETED',
+          },
+          {
+            actionType: 'Follow-up Required',
+            description: 'Surprise compliance re-audit scheduled for next week.',
+            officerId: officer1.id,
+            officerName: 'R. Natarajan',
+            actionDate: new Date(Date.now() - 2 * 24 * 3600 * 1000),
+            status: 'PENDING',
+          },
+        ],
+      },
+      evidence: {
+        create: [
+          {
+            evidenceType: 'INSTRUMENT_PHOTO',
+            fileName: 'scale_seal_expired_photo.jpg',
+            filePath: '/uploads/sample-evidence.jpg',
+            mimeType: 'image/jpeg',
+            fileSize: 420000,
+            notes: 'Front fascia photo showing expired seal badge date.',
+          },
+          {
+            evidenceType: 'OBSERVATION',
+            fileName: 'field_inspection_memo.pdf',
+            filePath: '/uploads/sample-memo.pdf',
+            mimeType: 'application/pdf',
+            fileSize: 185000,
+            notes: 'Field officer spot check inspection record memorandum.',
+          },
+        ],
+      },
+    },
+  });
+
+  const enfCase2 = await prisma.enforcementCase.create({
+    data: {
+      caseNumber: 'ENF-2026-000002',
+      businessId: business2.id,
+      instrumentId: inst2.id,
+      officerId: officer1.id,
+      violationType: 'Tampering/Irregularity',
+      priority: 'Critical',
+      status: 'VIOLATION_CONFIRMED',
+      location: '15 Palakkad Main Road, Pollachi, Coimbatore',
+      district: 'Coimbatore',
+      detectedDate: new Date(Date.now() - 4 * 24 * 3600 * 1000),
+      followUpDate: new Date(Date.now() + 2 * 24 * 3600 * 1000),
+      remarks: 'Lead verification seal wire found cut and calibration potentiometer accessible. Scale tested under-weighing by 42g on 20kg nominal weight.',
+      observations: 'Severe metrological violation under Section 26. Instrument confiscated for laboratory re-calibration.',
+      actions: {
+        create: [
+          {
+            actionType: 'Correction Required',
+            description: 'Immediate cessation of commercial use ordered. Seizure memo prepared.',
+            officerId: officer1.id,
+            officerName: 'R. Natarajan',
+            actionDate: new Date(Date.now() - 4 * 24 * 3600 * 1000),
+            status: 'COMPLETED',
+          },
+          {
+            actionType: 'Re-inspection',
+            description: 'Laboratory forensic tolerance test scheduled at Zonal Standards Laboratory.',
+            officerId: officer1.id,
+            officerName: 'R. Natarajan',
+            actionDate: new Date(Date.now() - 1 * 24 * 3600 * 1000),
+            status: 'PENDING',
+          },
+        ],
+      },
+      evidence: {
+        create: [
+          {
+            evidenceType: 'SEAL_VERIFICATION',
+            fileName: 'broken_seal_evidence.jpg',
+            filePath: '/uploads/broken-seal.jpg',
+            mimeType: 'image/jpeg',
+            fileSize: 610000,
+            notes: 'Close-up photograph showing cut seal wire and missing official monogram stamp.',
+          },
+        ],
+      },
+    },
+  });
+
+  const enfCase3 = await prisma.enforcementCase.create({
+    data: {
+      caseNumber: 'ENF-2026-000003',
+      businessId: business3.id,
+      instrumentId: inst3.id,
+      officerId: officer2.id,
+      violationType: 'Non-Compliant Instrument',
+      priority: 'Medium',
+      status: 'INSPECTION_REQUIRED',
+      location: '88 Avinashi Road, Kumaran Nagar, Tiruppur',
+      district: 'Tiruppur',
+      detectedDate: new Date(Date.now() - 2 * 24 * 3600 * 1000),
+      followUpDate: new Date(Date.now() + 4 * 24 * 3600 * 1000),
+      remarks: 'Unapproved model variation installed on industrial weighbridge platform without Model Approval Certificate.',
+      observations: 'Weighbridge load cells replaced with non-certified Chinese load sensors without prior intimation to Department.',
+      actions: {
+        create: [
+          {
+            actionType: 'Warning / Notice',
+            description: 'Show-cause notice served to produce OIML / Model Approval documentation.',
+            officerId: officer2.id,
+            officerName: 'Priya Sundaram',
+            actionDate: new Date(Date.now() - 1 * 24 * 3600 * 1000),
+            status: 'COMPLETED',
+          },
+        ],
+      },
+    },
+  });
+
+  const enfCase4 = await prisma.enforcementCase.create({
+    data: {
+      caseNumber: 'ENF-2026-000004',
+      businessId: business4.id,
+      instrumentId: inst4.id,
+      officerId: officer1.id,
+      violationType: 'Incorrect Display',
+      priority: 'Low',
+      status: 'FOLLOW_UP',
+      location: '104 DB Road, RS Puram, Coimbatore',
+      district: 'Coimbatore',
+      detectedDate: new Date(Date.now() - 10 * 24 * 3600 * 1000),
+      followUpDate: new Date(Date.now() + 1 * 24 * 3600 * 1000),
+      remarks: 'Customer-facing secondary display unit intermittent and illegible during billing.',
+      observations: 'Customer display cable loose; trader agreed to replace display module within 48 hours.',
+      actions: {
+        create: [
+          {
+            actionType: 'Correction Required',
+            description: 'Secondary display repair mandated.',
+            officerId: officer1.id,
+            officerName: 'R. Natarajan',
+            actionDate: new Date(Date.now() - 9 * 24 * 3600 * 1000),
+            status: 'COMPLETED',
+          },
+        ],
+      },
+    },
+  });
+
+  const enfCase5 = await prisma.enforcementCase.create({
+    data: {
+      caseNumber: 'ENF-2026-000005',
+      businessId: business5.id,
+      officerId: officer1.id,
+      violationType: 'Failed Verification',
+      priority: 'High',
+      status: 'ACTION_PENDING',
+      location: '220 Trichy Road, Singanallur, Coimbatore',
+      district: 'Coimbatore',
+      detectedDate: new Date(Date.now() - 3 * 24 * 3600 * 1000),
+      remarks: 'Fuel dispensing unit nozzle #3 failed 5-liter volumetric measure tolerance test by +35ml error.',
+      observations: 'Meter calibration drift detected in high-speed diesel dispenser nozzle.',
+      actions: {
+        create: [
+          {
+            actionType: 'Warning / Notice',
+            description: 'Nozzle tagged out of service with official red lock-out seal.',
+            officerId: officer1.id,
+            officerName: 'R. Natarajan',
+            actionDate: new Date(Date.now() - 3 * 24 * 3600 * 1000),
+            status: 'COMPLETED',
+          },
+        ],
+      },
+    },
+  });
+
+  const enfCase6 = await prisma.enforcementCase.create({
+    data: {
+      caseNumber: 'ENF-2026-000006',
+      businessId: business1.id,
+      officerId: officer1.id,
+      violationType: 'Missing Certificate',
+      priority: 'Low',
+      status: 'RESOLVED',
+      location: 'Gandhipuram, Coimbatore',
+      district: 'Coimbatore',
+      detectedDate: new Date(Date.now() - 15 * 24 * 3600 * 1000),
+      resolutionDate: new Date(Date.now() - 2 * 24 * 3600 * 1000),
+      remarks: 'Original verification certificate not framed and displayed in prominent public view at checkout.',
+      observations: 'Merchant produced certificate from safe and has now framed and mounted it conspicuously next to cash counter.',
+      actions: {
+        create: [
+          {
+            actionType: 'Case Resolution',
+            description: 'Merchant complied with Section 24 certificate display norms. Compliance verified by inspector.',
+            officerId: officer1.id,
+            officerName: 'R. Natarajan',
+            actionDate: new Date(Date.now() - 2 * 24 * 3600 * 1000),
+            status: 'COMPLETED',
+          },
+        ],
+      },
+    },
   });
 
   console.log('Seeding completed successfully!');

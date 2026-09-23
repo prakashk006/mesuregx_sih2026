@@ -43,6 +43,12 @@ import AdminReportsPage from './pages/admin/AdminReportsPage';
 import AdminPaymentsPage from './pages/admin/AdminPaymentsPage';
 import AdminComplaintsPage from './pages/admin/AdminComplaintsPage';
 
+// Enforcement & Documentation Pages
+import EnforcementDashboardPage from './pages/enforcement/EnforcementDashboardPage';
+import EnforcementDetailPage from './pages/enforcement/EnforcementDetailPage';
+import BusinessEnforcementPage from './pages/business/BusinessEnforcementPage';
+import SystemArchitecturePage from './pages/docs/SystemArchitecturePage';
+
 // Protected Route Guard
 function ProtectedRoute({ children, allowedRoles = [] }) {
   const { user, isAuthenticated, loading } = useAuth();
@@ -141,6 +147,30 @@ export default function App() {
               </PublicLayout>
             }
           />
+          <Route
+            path="/architecture"
+            element={
+              <PublicLayout>
+                <SystemArchitecturePage />
+              </PublicLayout>
+            }
+          />
+          <Route
+            path="/docs"
+            element={
+              <PublicLayout>
+                <SystemArchitecturePage />
+              </PublicLayout>
+            }
+          />
+          <Route
+            path="/system-architecture"
+            element={
+              <PublicLayout>
+                <SystemArchitecturePage />
+              </PublicLayout>
+            }
+          />
 
           {/* Business Owner Routes */}
           <Route
@@ -220,6 +250,14 @@ export default function App() {
             }
           />
           <Route
+            path="/business/enforcement"
+            element={
+              <ProtectedRoute allowedRoles={['BUSINESS_OWNER']}>
+                <BusinessEnforcementPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/business/notifications"
             element={
               <ProtectedRoute allowedRoles={['BUSINESS_OWNER']}>
@@ -294,6 +332,22 @@ export default function App() {
             element={
               <ProtectedRoute allowedRoles={['OFFICER', 'ADMIN']}>
                 <OfficerComplaintsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/officer/enforcement"
+            element={
+              <ProtectedRoute allowedRoles={['OFFICER', 'ADMIN']}>
+                <EnforcementDashboardPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/officer/enforcement/:id"
+            element={
+              <ProtectedRoute allowedRoles={['OFFICER', 'ADMIN', 'BUSINESS_OWNER']}>
+                <EnforcementDetailPage />
               </ProtectedRoute>
             }
           />
@@ -404,6 +458,14 @@ export default function App() {
             element={
               <ProtectedRoute allowedRoles={['ADMIN']}>
                 <AdminComplaintsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/enforcement"
+            element={
+              <ProtectedRoute allowedRoles={['ADMIN']}>
+                <EnforcementDashboardPage />
               </ProtectedRoute>
             }
           />

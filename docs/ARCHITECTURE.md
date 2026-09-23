@@ -98,3 +98,25 @@ The dedicated Python microservice strictly evaluates device readings in complian
   - SHA-256 Digital Signature: `SHA256-RSA:<certId>|<customId>|<officerCode>|<timestamp>`
   - Encoded QR URL pointing to public verification endpoint.
 - **Immutable Audit Trail:** All state transitions (creation, payment, field inspection, decision, certificate generation) create immutable rows in the `AuditLog` table.
+
+---
+
+## 5. Legal Metrology Enforcement Monitoring Module
+
+- **8-Stage Statutory Lifecycle:** `CASE IDENTIFIED` ➔ `REVIEW` ➔ `INSPECTION` ➔ `VIOLATION CONFIRMED` ➔ `ENFORCEMENT ACTION` ➔ `FOLLOW-UP` ➔ `RESOLUTION` ➔ `CASE CLOSED`.
+- **Zero-Duplication Cross Reference:** Direct relational linkage to existing Applications, Instruments, Certificates, Complaints, and Businesses.
+- **Statutory Actions Recorded:** Formal Show-Cause Notices under Section 24, Re-inspection mandates, and compliance resolutions.
+- **Mobile Field Inspection Console:** Geolocation acquisition (Lat/Lon coordinates), photographic evidence capture, tolerance measurement logging, and real-time synchronization.
+- **Surveillance Analytics:** Statewide district jurisdiction activity, monthly trend analysis, and repeat violator detection.
+
+---
+
+## 6. Technical Architecture & Security Documentation Portal (`/architecture`)
+
+An integrated, interactive GovTech documentation suite built in the MEASUREGX Civic Theme:
+1. **Interactive Multi-Tier Topology:** Visual architecture showing all client applications, API gateways, persistence layers, and calculation engines.
+2. **Role Architecture & Access Matrix:** Declarative permissions and operational restrictions for Citizens, LMOs, GATC Inspectors, Admins, and Public Verifiers.
+3. **12-Stage Metrological Workflow:** Visual end-to-end lifecycle from merchant onboarding to enforcement closure.
+4. **Security Architecture Posture:** Comprehensive declaration distinguishing implemented vs. planned defensive controls.
+5. **Live API Explorer:** Live interactive documentation of all backend REST endpoints.
+

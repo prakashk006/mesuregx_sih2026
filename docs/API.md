@@ -345,3 +345,45 @@ Updates investigation status and records officer findings.
   "resolutionSummary": "Violating scale confiscated and compounding fee notice issued. Matter closed."
 }
 ```
+
+---
+
+## 8. Enforcement Monitoring (`/api/enforcement`)
+
+All enforcement routes require `Authorization: Bearer <token>`.
+
+### `GET /api/enforcement/stats`
+Returns aggregated real-time operational indicators:
+- `openCases`, `underReview`, `violationsConfirmed`, `actionsPending`, `noticesIssued`, `resolvedCases`, `repeatViolations`, `expiredInstruments`.
+
+### `GET /api/enforcement`
+Lists enforcement dossiers with search and filtering by status, priority, district, violation type, and date range.
+
+### `POST /api/enforcement`
+Registers a new enforcement dossier linked to an existing business, instrument, application, or complaint:
+```json
+{
+  "businessId": "uuid-v4",
+  "instrumentId": "uuid-v4",
+  "violationType": "Expired Verification",
+  "priority": "High",
+  "location": "124 Cross Cut Road, Gandhipuram, Coimbatore",
+  "district": "Coimbatore",
+  "observations": "Counter scale found in commercial trade with expired verification stamp.",
+  "initialActionType": "Warning / Notice",
+  "initialActionDescription": "Show-cause notice served to present scale for verification within 7 days."
+}
+```
+
+### `GET /api/enforcement/:id`
+Retrieves full case dossier with actions taken, evidence files, and linked entity metadata.
+
+### `PUT /api/enforcement/:id/status`
+Advances lifecycle state (`OPEN`, `UNDER_REVIEW`, `INSPECTION_REQUIRED`, `VIOLATION_CONFIRMED`, `ACTION_PENDING`, `NOTICE_ISSUED`, `FOLLOW_UP`, `RESOLVED`, `CLOSED`).
+
+### `POST /api/enforcement/:id/actions`
+Records a formal statutory action (Warning/Notice, Re-inspection, Correction Required, Case Resolution).
+
+### `POST /api/enforcement/:id/mobile-sync`
+Mobile field inspection synchronization endpoint updating GPS coordinates, physical observations, and status in one transaction.
+

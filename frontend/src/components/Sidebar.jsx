@@ -89,6 +89,13 @@ export default function Sidebar() {
               <span>Grievances / Helpdesk</span>
             </NavLink>
             <NavLink
+              to="/business/enforcement"
+              className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
+            >
+              <ShieldAlert size={18} />
+              <span>Compliance Notices</span>
+            </NavLink>
+            <NavLink
               to="/business/notifications"
               className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
             >
@@ -142,6 +149,13 @@ export default function Sidebar() {
             >
               <AlertCircle size={18} />
               <span>Grievance Inquiries</span>
+            </NavLink>
+            <NavLink
+              to="/officer/enforcement"
+              className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
+            >
+              <ShieldAlert size={18} />
+              <span>Enforcement Cases</span>
             </NavLink>
             <NavLink
               to="/officer/notifications"
@@ -233,8 +247,24 @@ export default function Sidebar() {
               <BarChart3 size={18} />
               <span>Reports</span>
             </NavLink>
+            <NavLink
+              to="/admin/enforcement"
+              className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
+            >
+              <ShieldAlert size={18} />
+              <span>Enforcement Directorate</span>
+            </NavLink>
           </>
         )}
+
+        <div style={{ margin: '1rem 0 0.5rem', borderTop: '1px solid rgba(255,255,255,0.08)' }} />
+        <NavLink
+          to="/architecture"
+          className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
+        >
+          <Layers size={18} />
+          <span>System Architecture</span>
+        </NavLink>
       </nav>
 
       <div className="sidebar-footer">

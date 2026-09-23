@@ -50,6 +50,7 @@ model Business {
   certificates Certificate[]
   payments     Payment[]
   complaints   Complaint[]
+  enforcementCases EnforcementCase[]
 }
 
 model Officer {
@@ -71,6 +72,7 @@ model Officer {
   verifications Verification[]
   certificates Certificate[]
   complaints   Complaint[]
+  enforcementCases EnforcementCase[]
 }
 
 model InstrumentType {
@@ -300,3 +302,65 @@ model Complaint {
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
 }
+
+model EnforcementCase {
+  id              String   @id @default(uuid())
+  caseNumber      String   @unique // e.g. ENF-2026-000001
+  businessId      String?
+  business        Business? @relation(fields: [businessId], references: [id], onDelete: SetNull)
+  instrumentId    String?
+  applicationId   String?
+  certificateId   String?
+  complaintId     String?
+  verificationId  String?
+  
+  officerId       String?
+  officer         Officer?  @relation(fields: [officerId], references: [id], onDelete: SetNull)
+  
+  violationType   String   // Expired Verification, Failed Verification, Non-Compliant Instrument, Missing Certificate, Incorrect Display, Tampering/Irregularity, Other
+  priority        String   @default("Medium") // Low, Medium, High, Critical
+  status          String   @default("OPEN") 
+  // Lifecycle: OPEN, UNDER_REVIEW, INSPECTION_REQUIRED, VIOLATION_CONFIRMED, ACTION_PENDING, NOTICE_ISSUED, FOLLOW_UP, RESOLVED, CLOSED
+  
+  location        String?
+  district        String?
+  detectedDate    DateTime @default(now())
+  followUpDate    DateTime?
+  resolutionDate  DateTime?
+  
+  remarks         String?
+  observations    String?
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  actions         EnforcementAction[]
+  evidence        EnforcementEvidence[]
+}
+
+model EnforcementAction {
+  id              String          @id @default(uuid())
+  caseId          String
+  enforcementCase EnforcementCase @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  actionType      String          // Warning / Notice, Follow-up Required, Re-inspection, Correction Required, Case Resolution
+  description     String
+  officerId       String?
+  officerName     String?
+  actionDate      DateTime        @default(now())
+  status          String?         @default("COMPLETED")
+  createdAt       DateTime        @default(now())
+}
+
+model EnforcementEvidence {
+  id              String          @id @default(uuid())
+  caseId          String
+  enforcementCase EnforcementCase @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  evidenceType    String          // INSPECTION_PHOTO, INSTRUMENT_PHOTO, DOCUMENT, OBSERVATION, SEAL_VERIFICATION
+  fileName        String
+  filePath        String
+  mimeType        String?
+  fileSize        Int?
+  notes           String?
+  uploadedAt      DateTime        @default(now())
+}
+

@@ -152,3 +152,48 @@ Citizen and consumer vigilance and grievance redressal registry.
 - `investigationNotes` (Text, Optional)
 - `resolutionSummary` (Text, Optional)
 - `resolvedAt` (DateTime, Optional)
+
+### `EnforcementCase`
+State Legal Metrology surveillance and infraction dossiers.
+- `id` (String UUID)
+- `caseNumber` (Unique String, e.g. "ENF-2026-000001")
+- `businessId` (Foreign Key -> `Business.id`, Optional)
+- `instrumentId` (Foreign Key -> `Instrument.id`, Optional)
+- `applicationId` (Foreign Key -> `VerificationApplication.id`, Optional)
+- `certificateId` (Foreign Key -> `Certificate.id`, Optional)
+- `complaintId` (Foreign Key -> `Complaint.id`, Optional)
+- `officerId` (Foreign Key -> `Officer.id`, Optional)
+- `violationType` (String, e.g. "Expired Verification", "Failed Verification", "Tampering/Irregularity")
+- `priority` (`Low`, `Medium`, `High`, `Critical`)
+- `status` (`OPEN`, `UNDER_REVIEW`, `INSPECTION_REQUIRED`, `VIOLATION_CONFIRMED`, `ACTION_PENDING`, `NOTICE_ISSUED`, `FOLLOW_UP`, `RESOLVED`, `CLOSED`)
+- `location` (String)
+- `district` (String)
+- `detectedDate` (DateTime)
+- `followUpDate` (DateTime, Optional)
+- `resolutionDate` (DateTime, Optional)
+- `remarks` (Text, Optional)
+- `observations` (Text, Optional)
+
+### `EnforcementAction`
+Statutory compliance actions dispatched on enforcement dossiers.
+- `id` (String UUID)
+- `caseId` (Foreign Key -> `EnforcementCase.id`, OnDelete: Cascade)
+- `actionType` (`Warning / Notice`, `Follow-up Required`, `Re-inspection`, `Correction Required`, `Case Resolution`)
+- `description` (Text)
+- `officerId` (String, Optional)
+- `officerName` (String, Optional)
+- `actionDate` (DateTime)
+- `status` (String, default: "COMPLETED")
+
+### `EnforcementEvidence`
+Photographic and documentary evidence attached to an enforcement dossier.
+- `id` (String UUID)
+- `caseId` (Foreign Key -> `EnforcementCase.id`, OnDelete: Cascade)
+- `evidenceType` (`INSPECTION_PHOTO`, `INSTRUMENT_PHOTO`, `DOCUMENT`, `OBSERVATION`, `SEAL_VERIFICATION`)
+- `fileName` (String)
+- `filePath` (String)
+- `mimeType` (String, Optional)
+- `fileSize` (Integer, Optional)
+- `notes` (String, Optional)
+- `uploadedAt` (DateTime)
+
