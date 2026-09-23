@@ -387,3 +387,38 @@ Records a formal statutory action (Warning/Notice, Re-inspection, Correction Req
 ### `POST /api/enforcement/:id/mobile-sync`
 Mobile field inspection synchronization endpoint updating GPS coordinates, physical observations, and status in one transaction.
 
+---
+
+## 9. Government Approved Test Centres (GATC) & Allocation
+
+### `POST /api/auth/register-gatc`
+Self-registration endpoint for accredited test centres. Creates GATC profile in `PENDING_APPROVAL` status and notifies administrators for review.
+
+### `GET /api/gatc/active`
+Returns active, approved GATCs with live workload counts (`activeWorkload`) for the Admin allocation modal. Supports `?district=` filtering.
+
+### `GET /api/gatc/dashboard`
+Returns GATC command center KPI metrics (Total Assigned, Pending Acceptance, Under Testing, Scheduled Today, Completed, Certificates Issued, Monthly Testing Volume, Category Distribution).
+
+### `GET /api/gatc`
+Admin statewide GATC registry with search, district filtering, and workload metrics. Requires `ADMIN` role.
+
+### `PATCH /api/gatc/:id/status`
+Admin action to approve (`ACTIVE`), deactivate (`INACTIVE`), or put on hold a GATC test centre.
+
+### `POST /api/assignments/assign`
+Allocates verification application to either an LMO inspector or an approved GATC test centre. Validates active status and records `AssignmentHistory`.
+
+### `POST /api/assignments/reassign`
+Admin reassignment between LMO and GATC or between GATCs. Requires mandatory reason and logs audit trail.
+
+### `POST /api/assignments/accept`
+GATC accepts an assigned test application, advancing status to `ACCEPTED` / `GATC_IN_PROGRESS`.
+
+### `POST /api/assignments/reject`
+GATC requests reassignment with a mandatory reason, returning case to administrator oversight.
+
+### `GET /api/assignments/history/:applicationId`
+Retrieves the complete immutable assignment timeline for an application.
+
+

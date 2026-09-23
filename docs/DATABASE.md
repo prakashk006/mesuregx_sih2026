@@ -66,7 +66,44 @@ Stores state Legal Metrology inspectors and jurisdiction credentials.
 - `badgeNumber` (String, e.g. "LM-TN-CBE-042")
 - `status` (`ACTIVE` | `INACTIVE`)
 
-### `Instrument`
+### `Gatc` (Government Approved Test Centre)
+State-authorized private/autonomous testing laboratories accredited under Legal Metrology rules.
+- `id` (String UUID)
+- `userId` (Foreign Key -> `User.id`)
+- `gatcCode` (Unique String, e.g. "GATC-TN-001")
+- `name` (String, e.g. "National Test House - Southern Regional Lab")
+- `contactPerson`, `email`, `phone`
+- `address`, `city`, `district`, `state`, `pincode`
+- `authorizationNo` (Unique String, e.g. "GATC-AUTH-2026-TN-042")
+- `validTill` (DateTime)
+- `status` (`PENDING_APPROVAL`, `ACTIVE`, `INACTIVE`)
+- `categories` (String, e.g. "Non-Automatic Weighing Instruments, Fuel Dispensers")
+- `documents` (JSON String of accreditation certificates)
+
+### `Assignment`
+Allocation of an application to either a Legal Metrology Officer (LMO) or an Approved Test Centre (GATC).
+- `id` (String UUID)
+- `applicationId` (Unique Foreign Key -> `VerificationApplication.id`)
+- `assignedAuthority` (`LMO` | `GATC`)
+- `officerId` (Foreign Key -> `Officer.id`, Optional)
+- `gatcId` (Foreign Key -> `Gatc.id`, Optional)
+- `scheduledDate` (DateTime), `scheduledTime` (String)
+- `location`, `instructions`
+- `status` (`PENDING`, `ACCEPTED`, `REJECTED`, `IN_PROGRESS`, `COMPLETED`, `RESCHEDULED`)
+- `rejectionReason` (String, Optional)
+
+### `AssignmentHistory`
+Immutable audit ledger preserving complete chronological timeline of every allocation, reassignment, acceptance, and rejection.
+- `id` (String UUID)
+- `applicationId` (Foreign Key -> `VerificationApplication.id`)
+- `authorityType` (`LMO` | `GATC`)
+- `officerId`, `officerName` (Optional)
+- `gatcId`, `gatcName` (Optional)
+- `action` (`ASSIGNED`, `REASSIGNED`, `ACCEPTED`, `REJECTED`, `COMPLETED`)
+- `reason` (String, Mandatory on reassignment or rejection)
+- `scheduledDate` (DateTime, Optional)
+- `assignedBy` (String)
+- `assignedAt` (DateTime)
 Maintains hardware weighing scales, platform balances, and dispensers.
 - `id` (String UUID)
 - `customId` (Unique String, e.g. "WX-1001")
