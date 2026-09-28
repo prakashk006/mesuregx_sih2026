@@ -4,7 +4,7 @@
   "description": "MESUREGX Smart Legal Metrology Verification Platform - Backend API",
   "main": "src/server.js",
   "scripts": {
-    "start": "node src/server.js",
+    "start": "node prisma/init-db.js && node src/server.js",
     "dev": "node src/server.js",
     "build": "npx --yes prisma@5.22.0 generate && npx --yes prisma@5.22.0 db push",
     "prisma:generate": "npx --yes prisma@5.22.0 generate",

@@ -39,6 +39,22 @@ app.use(express.urlencoded({ extended: true, limit: '20mb' }));
 const uploadsDir = path.resolve(__dirname, '../../uploads');
 app.use('/uploads', express.static(uploadsDir));
 
+// Root service status endpoint
+app.get('/', (req, res) => {
+  res.json({
+    status: 'ok',
+    service: 'MESUREGX Legal Metrology API Server',
+    version: '1.0.0',
+    verificationEngine: 'NATIVE_EMBEDDED',
+    endpoints: {
+      health: '/api/health',
+      publicStats: '/api/public/stats',
+      verifyCertificate: '/api/public/verify/:certificateNumber',
+    },
+    timestamp: new Date().toISOString(),
+  });
+});
+
 // Health check endpoint
 app.get('/api/health', (req, res) => {
   res.json({
