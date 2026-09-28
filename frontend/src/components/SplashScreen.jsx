@@ -1,58 +1,91 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import './SplashScreen.css';
 
 /**
- * MeasureGX Ultra-Smooth 4-Second Mobile Intro Splash Screen
+ * MEASUREGX Ultra-Smooth Cinematic Intro Splash Screen
  * 
- * Mobile Animation Timeline (Total: 4.0 Seconds):
- * - 0.0s - 1.0s: 3D Isometric cube floats up, blurs into focus, scales into place.
- * - 1.0s - 2.0s: "measuregx" typography glides up + tagline expands letter spacing (0.12em -> 0.3em).
- * - 2.0s - 3.2s: Facet shimmer sweep & gentle mobile breathing pulse (1.2s absorption window).
- * - 3.2s - 4.0s: Ultra-smooth exit dissolve (opacity: 0, scale: 1.02, translateY: -18px, blur: 4px).
+ * Cinematic Timeline:
+ * - 0.0s - 0.9s: 3D Isometric cube floats up, glides into focus with ambient glow.
+ * - 0.9s - 1.8s: "measuregx" brand typography & official tagline expand with precision letter-spacing.
+ * - 1.8s - 2.8s: Dynamic facet shimmer sweep & subtle metrology pulse.
+ * - 2.8s - 3.5s: Silky exit dissolve — smooth opacity fade, gentle scale zoom (1.0 -> 1.03) & backdrop reveal.
  */
 export default function SplashScreen({ forceShow = false, onComplete }) {
   const [isVisible, setIsVisible] = useState(true);
+  const [isExiting, setIsExiting] = useState(false);
 
-  useEffect(() => {
-    // Check sessionStorage to ensure splash screen only triggers on initial session load
-    const hasSeenSplash = sessionStorage.getItem('measuregx_splash_seen');
-    if (hasSeenSplash && !forceShow) {
-      setIsVisible(false);
-      if (onComplete) onComplete();
-    } else {
-      runSplashSequence();
-    }
-
-    const handleReplay = () => {
-      sessionStorage.removeItem('measuregx_splash_seen');
-      setIsVisible(true);
-      runSplashSequence();
-    };
-
-    window.addEventListener('measuregx:replay_splash', handleReplay);
-
-    return () => {
-      window.removeEventListener('measuregx:replay_splash', handleReplay);
-      document.body.style.overflow = '';
-    };
-  }, [forceShow, onComplete]);
-
-  const runSplashSequence = () => {
-    document.body.style.overflow = 'hidden';
-
-    // Timer: exactly 4.0 seconds (4000ms)
+  const finishSplash = useCallback(() => {
+    setIsExiting(true);
     setTimeout(() => {
       sessionStorage.setItem('measuregx_splash_seen', 'true');
       document.body.style.overflow = '';
       setIsVisible(false);
       if (onComplete) onComplete();
-    }, 4000);
-  };
+    }, 600); // 600ms silky exit transition
+  }, [onComplete]);
+
+  useEffect(() => {
+    // Check if splash was already shown in this tab session
+    const hasSeen = sessionStorage.getItem('measuregx_splash_seen');
+    const urlParams = new URLSearchParams(window.location.search);
+    const splashParam = urlParams.get('splash'); // allow ?splash=1 to force test
+
+    if (hasSeen && !forceShow && splashParam !== '1') {
+      setIsVisible(false);
+      if (onComplete) onComplete();
+      return;
+    }
+
+    document.body.style.overflow = 'hidden';
+
+    // Auto-transition to exit phase at 2.9 seconds
+    const exitTimer = setTimeout(() => {
+      finishSplash();
+    }, 2900);
+
+    // Global replay event listener
+    const handleReplay = () => {
+      sessionStorage.removeItem('measuregx_splash_seen');
+      setIsExiting(false);
+      setIsVisible(true);
+      document.body.style.overflow = 'hidden';
+      setTimeout(() => finishSplash(), 2900);
+    };
+
+    window.addEventListener('measuregx:replay_splash', handleReplay);
+
+    return () => {
+      clearTimeout(exitTimer);
+      window.removeEventListener('measuregx:replay_splash', handleReplay);
+      document.body.style.overflow = '';
+    };
+  }, [forceShow, finishSplash, onComplete]);
 
   if (!isVisible) return null;
 
   return (
-    <div className="mgx-splash-overlay" id="measuregx-splash-screen">
+    <div
+      className={`mgx-splash-overlay ${isExiting ? 'mgx-splash-is-exiting' : ''}`}
+      id="measuregx-splash-screen"
+      onClick={finishSplash}
+      title="Click anywhere to skip intro"
+    >
+      {/* Ambient Metrology Aura Glow */}
+      <div className="mgx-splash-ambient-glow" />
+
+      {/* Skip Button */}
+      <button
+        type="button"
+        className="mgx-splash-skip-btn"
+        onClick={(e) => {
+          e.stopPropagation();
+          finishSplash();
+        }}
+        aria-label="Skip Intro"
+      >
+        Skip ✕
+      </button>
+
       <div className="mgx-splash-container">
         {/* 3D Isometric Cube Brand Logo Icon */}
         <div className="mgx-splash-logo-wrapper">
@@ -86,13 +119,12 @@ export default function SplashScreen({ forceShow = false, onComplete }) {
               </linearGradient>
             </defs>
 
-            {/* TOP FACET: Isometric Rhombus with Curved Green Facet */}
+            {/* TOP FACET: Isometric Rhombus with Curved Green Accent */}
             <path
               className="mgx-facet-shimmer"
               d="M 100 25 L 160 60 L 100 95 L 40 60 Z"
               fill="url(#topFacetGrad)"
             />
-            {/* Top Facet Inner Curved Arc Accent */}
             <path
               d="M 60 48.3 C 90 35, 120 70, 160 60 L 100 95 L 40 60 Z"
               fill="#10B981"
@@ -105,7 +137,6 @@ export default function SplashScreen({ forceShow = false, onComplete }) {
               d="M 40 65 L 95 100 L 95 175 L 40 140 Z"
               fill="url(#leftFacetGrad)"
             />
-            {/* Left Facet Stylized 'm' Arch Cutout Accent */}
             <path
               d="M 52 82 C 68 70, 85 98, 85 130 L 95 136 L 95 100 L 40 65 Z"
               fill="#0B2545"
@@ -128,7 +159,7 @@ export default function SplashScreen({ forceShow = false, onComplete }) {
               <line x1="106" y1="162" x2="124" y2="151" />
             </g>
 
-            {/* White Crisp Modular Facet Dividers */}
+            {/* Crisp Modular Facet Dividers */}
             <path
               d="M 100 25 L 160 60 L 100 95 L 40 60 Z"
               stroke="#FFFFFF"
@@ -150,9 +181,9 @@ export default function SplashScreen({ forceShow = false, onComplete }) {
           — EVERY MEASURE MATTERS —
         </div>
 
-        {/* Mobile Progress Fill Line */}
+        {/* Mobile / Web Progress Fill Line */}
         <div className="mgx-splash-progress-bar">
-          <div className="mgx-splash-progress-fill"></div>
+          <div className="mgx-splash-progress-fill" />
         </div>
       </div>
     </div>
