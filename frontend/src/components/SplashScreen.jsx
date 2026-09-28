@@ -1,0 +1,160 @@
+import React, { useState, useEffect } from 'react';
+import './SplashScreen.css';
+
+/**
+ * MeasureGX Ultra-Smooth 4-Second Mobile Intro Splash Screen
+ * 
+ * Mobile Animation Timeline (Total: 4.0 Seconds):
+ * - 0.0s - 1.0s: 3D Isometric cube floats up, blurs into focus, scales into place.
+ * - 1.0s - 2.0s: "measuregx" typography glides up + tagline expands letter spacing (0.12em -> 0.3em).
+ * - 2.0s - 3.2s: Facet shimmer sweep & gentle mobile breathing pulse (1.2s absorption window).
+ * - 3.2s - 4.0s: Ultra-smooth exit dissolve (opacity: 0, scale: 1.02, translateY: -18px, blur: 4px).
+ */
+export default function SplashScreen({ forceShow = false, onComplete }) {
+  const [isVisible, setIsVisible] = useState(true);
+
+  useEffect(() => {
+    // Check sessionStorage to ensure splash screen only triggers on initial session load
+    const hasSeenSplash = sessionStorage.getItem('measuregx_splash_seen');
+    if (hasSeenSplash && !forceShow) {
+      setIsVisible(false);
+      if (onComplete) onComplete();
+    } else {
+      runSplashSequence();
+    }
+
+    const handleReplay = () => {
+      sessionStorage.removeItem('measuregx_splash_seen');
+      setIsVisible(true);
+      runSplashSequence();
+    };
+
+    window.addEventListener('measuregx:replay_splash', handleReplay);
+
+    return () => {
+      window.removeEventListener('measuregx:replay_splash', handleReplay);
+      document.body.style.overflow = '';
+    };
+  }, [forceShow, onComplete]);
+
+  const runSplashSequence = () => {
+    document.body.style.overflow = 'hidden';
+
+    // Timer: exactly 4.0 seconds (4000ms)
+    setTimeout(() => {
+      sessionStorage.setItem('measuregx_splash_seen', 'true');
+      document.body.style.overflow = '';
+      setIsVisible(false);
+      if (onComplete) onComplete();
+    }, 4000);
+  };
+
+  if (!isVisible) return null;
+
+  return (
+    <div className="mgx-splash-overlay" id="measuregx-splash-screen">
+      <div className="mgx-splash-container">
+        {/* 3D Isometric Cube Brand Logo Icon */}
+        <div className="mgx-splash-logo-wrapper">
+          <svg
+            className="mgx-splash-cube-svg"
+            viewBox="0 0 200 200"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <defs>
+              {/* Top Facet Gradient (Sky Azure to Emerald Green) */}
+              <linearGradient id="topFacetGrad" x1="40" y1="25" x2="160" y2="95" gradientUnits="userSpaceOnUse">
+                <stop offset="0%" stopColor="#E0F2FE" />
+                <stop offset="40%" stopColor="#38BDF8" />
+                <stop offset="85%" stopColor="#10B981" />
+                <stop offset="100%" stopColor="#059669" />
+              </linearGradient>
+
+              {/* Left Facet Gradient (Deep Navy Blue) */}
+              <linearGradient id="leftFacetGrad" x1="40" y1="65" x2="95" y2="175" gradientUnits="userSpaceOnUse">
+                <stop offset="0%" stopColor="#1D4ED8" />
+                <stop offset="60%" stopColor="#0B2545" />
+                <stop offset="100%" stopColor="#061A30" />
+              </linearGradient>
+
+              {/* Right Facet Gradient (Vibrant Azure) */}
+              <linearGradient id="rightFacetGrad" x1="105" y1="65" x2="160" y2="175" gradientUnits="userSpaceOnUse">
+                <stop offset="0%" stopColor="#007BFF" />
+                <stop offset="70%" stopColor="#0284C7" />
+                <stop offset="100%" stopColor="#0369A1" />
+              </linearGradient>
+            </defs>
+
+            {/* TOP FACET: Isometric Rhombus with Curved Green Facet */}
+            <path
+              className="mgx-facet-shimmer"
+              d="M 100 25 L 160 60 L 100 95 L 40 60 Z"
+              fill="url(#topFacetGrad)"
+            />
+            {/* Top Facet Inner Curved Arc Accent */}
+            <path
+              d="M 60 48.3 C 90 35, 120 70, 160 60 L 100 95 L 40 60 Z"
+              fill="#10B981"
+              opacity="0.88"
+            />
+
+            {/* LEFT FACET: Deep Navy Isometric Prism Face */}
+            <path
+              className="mgx-facet-shimmer"
+              d="M 40 65 L 95 100 L 95 175 L 40 140 Z"
+              fill="url(#leftFacetGrad)"
+            />
+            {/* Left Facet Stylized 'm' Arch Cutout Accent */}
+            <path
+              d="M 52 82 C 68 70, 85 98, 85 130 L 95 136 L 95 100 L 40 65 Z"
+              fill="#0B2545"
+              opacity="0.65"
+            />
+
+            {/* RIGHT FACET: Vibrant Azure Blue with Metrology Ruler Ticks */}
+            <path
+              className="mgx-facet-shimmer"
+              d="M 105 100 L 160 65 L 160 140 L 105 175 Z"
+              fill="url(#rightFacetGrad)"
+            />
+
+            {/* Metrology Precision Ruler Tick Marks on Right Facet */}
+            <g stroke="#FFFFFF" strokeWidth="3.5" strokeLinecap="round" opacity="0.95">
+              <line x1="106" y1="114" x2="124" y2="103" />
+              <line x1="106" y1="126" x2="120" y2="117" />
+              <line x1="106" y1="138" x2="124" y2="127" />
+              <line x1="106" y1="150" x2="120" y2="141" />
+              <line x1="106" y1="162" x2="124" y2="151" />
+            </g>
+
+            {/* White Crisp Modular Facet Dividers */}
+            <path
+              d="M 100 25 L 160 60 L 100 95 L 40 60 Z"
+              stroke="#FFFFFF"
+              strokeWidth="3.5"
+              fill="none"
+            />
+            <line x1="97.5" y1="97" x2="97.5" y2="178" stroke="#FFFFFF" strokeWidth="4.5" />
+          </svg>
+        </div>
+
+        {/* Brand Typography */}
+        <div className="mgx-splash-brand-text">
+          <span className="mgx-brand-measure">measure</span>
+          <span className="mgx-brand-gx">gx</span>
+        </div>
+
+        {/* Tagline Subtitle */}
+        <div className="mgx-splash-tagline">
+          — EVERY MEASURE MATTERS —
+        </div>
+
+        {/* Mobile Progress Fill Line */}
+        <div className="mgx-splash-progress-bar">
+          <div className="mgx-splash-progress-fill"></div>
+        </div>
+      </div>
+    </div>
+  );
+}

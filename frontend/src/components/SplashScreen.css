@@ -1,0 +1,234 @@
+/* ==========================================================================
+   MEASUREGX ULTRA-SMOOTH MOBILE INTRO SPLASH SCREEN (4-SECOND TIMELINE)
+   ========================================================================== */
+
+.mgx-splash-overlay {
+  position: fixed;
+  inset: 0;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 9999;
+  background-color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  user-select: none;
+  touch-action: none;
+  -webkit-tap-highlight-color: transparent;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  animation: mgxMobileSplashExit 4.0s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+  will-change: opacity, transform, filter;
+  transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
+}
+
+/* Mobile App Viewport Framing Container */
+.mgx-splash-container {
+  width: 100%;
+  max-width: 380px; /* Mobile App Portrait ratio framing */
+  padding: 2.5rem 1.75rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  position: relative;
+  box-sizing: border-box;
+}
+
+/* ==========================================================================
+   1. LOGO ICON ANIMATIONS (0.0s - 1.0s Entrance, 2.0s - 3.2s Mobile Pulse)
+   ========================================================================== */
+.mgx-splash-logo-wrapper {
+  position: relative;
+  width: 104px;
+  height: 104px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1.75rem;
+  animation: mgxMobileIconEntrance 1.0s cubic-bezier(0.16, 1, 0.3, 1) 0s forwards,
+             mgxMobileIconPulse 1.2s ease-in-out 2.0s forwards;
+  opacity: 0;
+  transform: translate3d(0, 28px, 0) scale(0.78);
+  filter: blur(12px);
+  will-change: transform, opacity, filter;
+}
+
+.mgx-splash-cube-svg {
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 14px 28px rgba(0, 123, 255, 0.22));
+}
+
+/* Facet Shimmer Animation (2.0s - 3.2s) */
+.mgx-facet-shimmer {
+  animation: mgxMobileFacetShimmer 1.2s ease-in-out 2.0s forwards;
+}
+
+/* ==========================================================================
+   2. BRAND TYPOGRAPHY ANIMATION (1.0s - 2.0s)
+   ========================================================================== */
+.mgx-splash-brand-text {
+  font-family: 'Outfit', 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 2.6rem;
+  font-weight: 800;
+  line-height: 1.05;
+  letter-spacing: -0.025em;
+  margin-bottom: 0.75rem;
+  opacity: 0;
+  transform: translate3d(0, 18px, 0);
+  animation: mgxMobileTextSlideUp 1.0s cubic-bezier(0.16, 1, 0.3, 1) 1.0s forwards;
+  will-change: transform, opacity;
+}
+
+.mgx-brand-measure {
+  color: #0B2545; /* Deep Navy */
+}
+
+.mgx-brand-gx {
+  color: #007BFF; /* Azure Blue */
+}
+
+/* ==========================================================================
+   3. TAGLINE ANIMATION (1.0s - 2.0s with Fluid Expansion)
+   ========================================================================== */
+.mgx-splash-tagline {
+  font-family: 'Outfit', 'Inter', -apple-system, sans-serif;
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: #475569;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  opacity: 0;
+  transform: translate3d(0, 12px, 0);
+  animation: mgxMobileTaglineFadeIn 1.0s cubic-bezier(0.16, 1, 0.3, 1) 1.0s forwards;
+  will-change: transform, opacity, letter-spacing;
+}
+
+/* Mobile Bottom Progress Line Bar */
+.mgx-splash-progress-bar {
+  position: absolute;
+  bottom: 30px;
+  width: 150px;
+  height: 3.5px;
+  background: rgba(11, 37, 69, 0.07);
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.mgx-splash-progress-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #007BFF 0%, #10B981 100%);
+  border-radius: 99px;
+  animation: mgxMobileProgressFill 3.2s cubic-bezier(0.25, 1, 0.5, 1) 0s forwards;
+}
+
+/* ==========================================================================
+   KEYFRAME ANIMATIONS (4.0-SECOND MOBILE TIMELINE)
+   ========================================================================== */
+
+/* Phase 1: 0.0s - 1.0s Mobile Icon Entrance */
+@keyframes mgxMobileIconEntrance {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 28px, 0) scale(0.78);
+    filter: blur(12px);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+    filter: blur(0px);
+  }
+}
+
+/* Phase 2: 1.0s - 2.0s Brand Text Slide Up */
+@keyframes mgxMobileTextSlideUp {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 18px, 0);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+/* Phase 2: 1.0s - 2.0s Tagline Fade + Tracking Expansion */
+@keyframes mgxMobileTaglineFadeIn {
+  0% {
+    opacity: 0;
+    letter-spacing: 0.12em;
+    transform: translate3d(0, 12px, 0);
+  }
+  100% {
+    opacity: 1;
+    letter-spacing: 0.3em;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+/* Phase 3: 2.0s - 3.2s Mobile Breathing Pulse */
+@keyframes mgxMobileIconPulse {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(0, -3px, 0) scale(1.05);
+  }
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+/* Phase 3: 2.0s - 3.2s Facet Shimmer Sweep */
+@keyframes mgxMobileFacetShimmer {
+  0% {
+    opacity: 0.85;
+  }
+  50% {
+    opacity: 1;
+    filter: brightness(1.18);
+  }
+  100% {
+    opacity: 1;
+    filter: brightness(1);
+  }
+}
+
+/* Progress Bar Fill 0.0s to 3.2s */
+@keyframes mgxMobileProgressFill {
+  0% {
+    width: 0%;
+  }
+  100% {
+    width: 100%;
+  }
+}
+
+/* Phase 4: 3.2s - 4.0s Ultra-Smooth Container Exit Dissolve */
+@keyframes mgxMobileSplashExit {
+  0% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+    filter: blur(0px);
+    pointer-events: auto;
+  }
+  80% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+    filter: blur(0px);
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(0, -18px, 0) scale(1.02);
+    filter: blur(4px);
+    pointer-events: none;
+    display: none;
+  }
+}

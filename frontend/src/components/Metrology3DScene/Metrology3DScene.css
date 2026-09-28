@@ -1,0 +1,560 @@
+/* ============================================================
+   MEASUREGX 3D METROLOGY HERO SCENE - CSS STYLES
+   ============================================================ */
+
+.m3d-container {
+  position: relative;
+  width: 100%;
+  max-width: 720px;
+  height: 600px;
+  margin: 0 auto;
+  perspective: 1200px;
+  transform-style: preserve-3d;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+  overflow: visible;
+}
+
+/* Background Layers */
+.m3d-ambient-glow {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 500px;
+  height: 500px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(16, 185, 129, 0.14) 0%, rgba(6, 78, 59, 0.06) 45%, transparent 70%);
+  filter: blur(55px);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Vertical Holographic Light Beam */
+.m3d-holo-beam {
+  position: absolute;
+  top: 15%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 240px;
+  height: 380px;
+  background: linear-gradient(180deg, rgba(16, 185, 129, 0.12) 0%, rgba(6, 78, 59, 0.04) 60%, transparent 100%);
+  clip-path: polygon(25% 0%, 75% 0%, 100% 100%, 0% 100%);
+  filter: blur(14px);
+  pointer-events: none;
+  z-index: 2;
+  animation: m3d-beam-pulse 4.5s ease-in-out infinite alternate;
+}
+
+@keyframes m3d-beam-pulse {
+  0% {
+    opacity: 0.45;
+    transform: translateX(-50%) scaleX(0.92);
+  }
+  100% {
+    opacity: 0.85;
+    transform: translateX(-50%) scaleX(1.08);
+  }
+}
+
+/* ------------------------------------------------------------
+   HOLOGRAPHIC CONCENTRIC PLATFORM
+   ------------------------------------------------------------ */
+.m3d-platform-wrapper {
+  position: absolute;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%) rotateX(70deg);
+  width: 460px;
+  height: 460px;
+  pointer-events: none;
+  z-index: 3;
+}
+
+.m3d-ring-outer {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 1.5px dashed rgba(16, 185, 129, 0.35);
+  box-shadow: 0 0 25px rgba(16, 185, 129, 0.15), inset 0 0 20px rgba(16, 185, 129, 0.08);
+  animation: m3d-spin 34s linear infinite;
+}
+
+.m3d-ring-middle {
+  position: absolute;
+  inset: 50px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(37, 99, 235, 0.32);
+  animation: m3d-spin-reverse 24s linear infinite;
+}
+
+.m3d-ring-middle::before {
+  content: '';
+  position: absolute;
+  top: -4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #EA580C;
+  box-shadow: 0 0 8px #EA580C, 0 0 16px #EA580C;
+}
+
+.m3d-ring-middle::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #10B981;
+  box-shadow: 0 0 8px #10B981;
+}
+
+.m3d-ring-inner {
+  position: absolute;
+  inset: 100px;
+  border-radius: 50%;
+  border: 1px dotted rgba(6, 78, 59, 0.45);
+  background: radial-gradient(circle, rgba(16, 185, 129, 0.1) 0%, transparent 70%);
+  animation: m3d-spin 18s linear infinite;
+}
+
+.m3d-platform-sweep {
+  position: absolute;
+  inset: 20px;
+  border-radius: 50%;
+  background: conic-gradient(from 0deg, rgba(16, 185, 129, 0.18) 0deg, transparent 60deg, transparent 360deg);
+  animation: m3d-spin 6s linear infinite;
+}
+
+@keyframes m3d-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes m3d-spin-reverse {
+  from { transform: rotate(360deg); }
+  to { transform: rotate(0deg); }
+}
+
+/* ------------------------------------------------------------
+   3D WEIGHING SCALE COMPONENT
+   ------------------------------------------------------------ */
+.m3d-scale-anchor {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transform-style: preserve-3d;
+}
+
+/* The Glass/Metal Platter */
+.m3d-platter-assembly {
+  position: relative;
+  width: 250px;
+  height: 72px;
+  perspective: 600px;
+  transform-style: preserve-3d;
+  margin-bottom: -10px;
+  z-index: 12;
+}
+
+.m3d-platter-glass {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.85) 0%, rgba(240, 253, 244, 0.6) 50%, rgba(209, 250, 229, 0.8) 100%);
+  border: 1.5px solid rgba(16, 185, 129, 0.5);
+  border-radius: 14px;
+  transform: rotateX(42deg);
+  box-shadow: 
+    0 10px 30px rgba(6, 78, 59, 0.2),
+    0 0 20px rgba(16, 185, 129, 0.25),
+    inset 0 0 15px rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(8px);
+  position: relative;
+  overflow: hidden;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.m3d-scale-anchor:hover .m3d-platter-glass {
+  border-color: rgba(16, 185, 129, 0.85);
+  box-shadow: 
+    0 12px 35px rgba(6, 78, 59, 0.28),
+    0 0 30px rgba(16, 185, 129, 0.35);
+}
+
+.m3d-platter-grid-lines {
+  position: absolute;
+  inset: 0;
+  background-image: 
+    linear-gradient(rgba(6, 78, 59, 0.15) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(6, 78, 59, 0.15) 1px, transparent 1px);
+  background-size: 20px 14px;
+}
+
+.m3d-platter-scanline {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, #10B981, #EA580C, #10B981, transparent);
+  box-shadow: 0 0 10px #10B981;
+  animation: m3d-platter-scan 3.2s ease-in-out infinite alternate;
+}
+
+@keyframes m3d-platter-scan {
+  0% {
+    top: 0%;
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    top: 92%;
+    opacity: 0.3;
+  }
+}
+
+/* Platter Support Cantilever / Stanchion */
+.m3d-support-pillar {
+  width: 44px;
+  height: 18px;
+  background: linear-gradient(180deg, #064E3B 0%, #032E23 100%);
+  border-left: 1px solid rgba(16, 185, 129, 0.5);
+  border-right: 1px solid rgba(16, 185, 129, 0.5);
+  box-shadow: 0 0 10px rgba(6, 78, 59, 0.25);
+  z-index: 11;
+  margin-top: -6px;
+}
+
+/* Main Scale Base Enclosure */
+.m3d-scale-base {
+  width: 280px;
+  background: linear-gradient(180deg, #064E3B 0%, #043629 100%);
+  border: 1.5px solid rgba(16, 185, 129, 0.35);
+  border-radius: 20px;
+  padding: 1.25rem 1.15rem 1.1rem;
+  box-shadow: 
+    0 20px 50px rgba(6, 78, 59, 0.28),
+    0 6px 18px rgba(0, 0, 0, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  position: relative;
+  z-index: 10;
+  transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+}
+
+.m3d-scale-anchor:hover .m3d-scale-base {
+  border-color: rgba(16, 185, 129, 0.65);
+  box-shadow: 
+    0 26px 60px rgba(6, 78, 59, 0.36),
+    0 8px 24px rgba(0, 0, 0, 0.15);
+}
+
+/* Digital LED Display Screen */
+.m3d-digital-display {
+  background: #022018;
+  border: 1.5px solid rgba(16, 185, 129, 0.45);
+  border-radius: 12px;
+  padding: 0.75rem 0.65rem 0.6rem;
+  margin-bottom: 0.75rem;
+  box-shadow: 
+    inset 0 0 18px rgba(16, 185, 129, 0.2),
+    0 4px 12px rgba(0, 0, 0, 0.25);
+  position: relative;
+  overflow: hidden;
+}
+
+.m3d-display-scan-sweep {
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 80%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(16, 185, 129, 0.12), transparent);
+  animation: m3d-sweep 3.5s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes m3d-sweep {
+  0% { left: -100%; }
+  100% { left: 200%; }
+}
+
+.m3d-display-value {
+  font-family: 'Space Mono', 'Outfit', monospace;
+  font-size: 2.1rem;
+  font-weight: 800;
+  color: #FFFFFF;
+  letter-spacing: -0.01em;
+  text-shadow: 0 0 16px rgba(16, 185, 129, 0.75);
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 0.35rem;
+  transition: all 0.25s ease;
+}
+
+.m3d-display-unit {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #10B981;
+  text-shadow: 0 0 10px rgba(16, 185, 129, 0.6);
+}
+
+/* Scanning Status Strip */
+.m3d-scan-status-strip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  padding: 0.45rem 0.65rem;
+  border-radius: 8px;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  transition: all 0.3s ease;
+}
+
+.m3d-status-verifying {
+  background: rgba(234, 88, 12, 0.15);
+  border: 1px solid rgba(234, 88, 12, 0.4);
+  color: #FFEDD5;
+}
+
+.m3d-status-verified {
+  background: rgba(16, 185, 129, 0.2);
+  border: 1px solid rgba(16, 185, 129, 0.5);
+  color: #A7F3D0;
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.25);
+}
+
+/* ------------------------------------------------------------
+   GLASSMORPHISM CARDS (Floating Verification & Certificate)
+   ------------------------------------------------------------ */
+.m3d-glass-card {
+  position: absolute;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 1px solid rgba(6, 78, 59, 0.14);
+  border-radius: 16px;
+  box-shadow: 
+    0 16px 36px rgba(6, 78, 59, 0.12),
+    0 4px 12px rgba(0, 0, 0, 0.05);
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 0.25s ease;
+  user-select: none;
+}
+
+.m3d-glass-card:hover {
+  transform: translateY(-5px) scale(1.02);
+  border-color: rgba(6, 78, 59, 0.3);
+  box-shadow: 
+    0 22px 46px rgba(6, 78, 59, 0.18),
+    0 6px 16px rgba(0, 0, 0, 0.08);
+}
+
+/* Left Certificate Card */
+.m3d-card-cert {
+  top: 40px;
+  left: -25px;
+  width: 220px;
+  padding: 0.95rem;
+  z-index: 20;
+}
+
+/* Right Live Verification Card */
+.m3d-card-verify {
+  top: 35px;
+  right: -25px;
+  width: 225px;
+  padding: 1rem 0.95rem;
+  z-index: 20;
+}
+
+/* Floating QR Elements */
+.m3d-floating-qr {
+  position: absolute;
+  z-index: 18;
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(6, 78, 59, 0.15);
+  border-radius: 12px;
+  padding: 6px;
+  box-shadow: 0 10px 25px rgba(6, 78, 59, 0.12), 0 2px 8px rgba(0,0,0,0.04);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.m3d-floating-qr:hover {
+  transform: scale(1.08) rotate(2deg);
+  box-shadow: 0 14px 30px rgba(6, 78, 59, 0.18);
+}
+
+/* Legal Metrology Floating Icon Badges */
+.m3d-icon-badge {
+  position: absolute;
+  z-index: 18;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(6, 78, 59, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 20px rgba(6, 78, 59, 0.12), 0 2px 6px rgba(0, 0, 0, 0.04);
+  cursor: pointer;
+  transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.m3d-icon-badge:hover {
+  transform: scale(1.15) translateY(-3px);
+  border-color: #064E3B;
+  box-shadow: 0 12px 25px rgba(6, 78, 59, 0.2);
+}
+
+/* Floating Animations */
+.m3d-anim-float-1 {
+  animation: m3d-float-1 5.2s ease-in-out infinite;
+}
+
+.m3d-anim-float-2 {
+  animation: m3d-float-2 6.4s ease-in-out 1s infinite;
+}
+
+.m3d-anim-float-3 {
+  animation: m3d-float-3 7.6s ease-in-out 0.5s infinite;
+}
+
+.m3d-anim-float-4 {
+  animation: m3d-float-4 8.2s ease-in-out 1.8s infinite;
+}
+
+@keyframes m3d-float-1 {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-9px) rotate(0.8deg); }
+}
+
+@keyframes m3d-float-2 {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-11px) rotate(-1deg); }
+}
+
+@keyframes m3d-float-3 {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-7px); }
+}
+
+@keyframes m3d-float-4 {
+  0%, 100% { transform: translateY(0px) scale(1); }
+  50% { transform: translateY(-8px) scale(1.03); }
+}
+
+/* QR Laser Scan Line */
+.m3d-laser-scan {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: #10B981;
+  box-shadow: 0 0 8px #10B981;
+  animation: m3d-laser-travel 2.8s ease-in-out infinite;
+}
+
+@keyframes m3d-laser-travel {
+  0% { top: 0%; opacity: 0.2; }
+  15% { opacity: 1; }
+  85% { opacity: 1; }
+  100% { top: 96%; opacity: 0.2; }
+}
+
+/* ------------------------------------------------------------
+   RESPONSIVE DESIGN BREAKPOINTS
+   ------------------------------------------------------------ */
+@media (max-width: 1024px) {
+  .m3d-container {
+    height: 540px;
+    transform: scale(0.92);
+  }
+  .m3d-card-cert {
+    left: -10px;
+    width: 200px;
+  }
+  .m3d-card-verify {
+    right: -10px;
+    width: 205px;
+  }
+}
+
+@media (max-width: 768px) {
+  .m3d-container {
+    height: 500px;
+    transform: scale(0.82);
+    margin: -20px auto;
+  }
+  .m3d-card-cert {
+    left: 10px;
+    top: 20px;
+    width: 180px;
+    padding: 0.75rem;
+  }
+  .m3d-card-verify {
+    right: 10px;
+    top: 20px;
+    width: 185px;
+    padding: 0.75rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .m3d-container {
+    height: 450px;
+    transform: scale(0.72);
+    margin: -35px auto;
+  }
+  .m3d-card-cert {
+    display: none;
+  }
+  .m3d-card-verify {
+    top: 0px;
+    right: 50%;
+    transform: translateX(50%) !important;
+    width: 260px;
+  }
+}
+
+/* ------------------------------------------------------------
+   ACCESSIBILITY: REDUCED MOTION OVERRIDE
+   ------------------------------------------------------------ */
+@media (prefers-reduced-motion: reduce) {
+  .m3d-anim-float-1,
+  .m3d-anim-float-2,
+  .m3d-anim-float-3,
+  .m3d-anim-float-4,
+  .m3d-ring-outer,
+  .m3d-ring-middle,
+  .m3d-ring-inner,
+  .m3d-platform-sweep,
+  .m3d-platter-scanline,
+  .m3d-display-scan-sweep,
+  .m3d-laser-scan,
+  .m3d-holo-beam {
+    animation: none !important;
+    transform: none !important;
+    transition: none !important;
+  }
+  .m3d-glass-card:hover,
+  .m3d-icon-badge:hover,
+  .m3d-floating-qr:hover {
+    transform: none !important;
+  }
+}

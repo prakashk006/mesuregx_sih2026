@@ -1,0 +1,26 @@
+{
+  "name": "mesuregx-backend",
+  "version": "1.0.0",
+  "description": "MESUREGX Smart Legal Metrology Verification Platform - Backend API",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node src/server.js",
+    "build": "npx --yes prisma@5.22.0 generate && npx --yes prisma@5.22.0 db push",
+    "prisma:generate": "npx --yes prisma@5.22.0 generate",
+    "prisma:push": "npx --yes prisma@5.22.0 db push",
+    "seed": "node prisma/seed.js",
+    "test": "node test/api.test.js"
+  },
+  "dependencies": {
+    "@prisma/client": "5.22.0",
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "jsonwebtoken": "^9.0.2",
+    "multer": "^1.4.5-lts.1",
+    "nodemailer": "^6.10.0",
+    "prisma": "5.22.0"
+  }
+}
