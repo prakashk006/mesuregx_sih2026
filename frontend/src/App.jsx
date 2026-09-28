@@ -2,7 +2,6 @@ import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { SidebarProvider, useSidebar } from './context/SidebarContext';
-import SplashScreen from './components/SplashScreen';
 
 // Navigation & Layout
 import DashboardHeader from './components/DashboardHeader';
@@ -107,7 +106,6 @@ function PublicLayout({ children }) {
 export default function App() {
   return (
     <AuthProvider>
-      <SplashScreen />
       <SidebarProvider>
         <BrowserRouter>
           <Routes>
