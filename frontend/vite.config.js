@@ -14,8 +14,6 @@ export default defineConfig({
   resolve: {
     alias: {
       'three': resolveModule('three'),
-      '@react-three/fiber': resolveModule('@react-three/fiber'),
-      '@react-three/drei': resolveModule('@react-three/drei'),
     },
   },
   server: {
