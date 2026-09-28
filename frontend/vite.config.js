@@ -1,14 +1,21 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
+import fs from 'fs';
+
+const resolveModule = (name) => {
+  const local = path.resolve(__dirname, 'node_modules', name);
+  if (fs.existsSync(local)) return local;
+  return path.resolve(__dirname, '../node_modules', name);
+};
 
 export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
-      'three': path.resolve(__dirname, '../node_modules/three'),
-      '@react-three/fiber': path.resolve(__dirname, '../node_modules/@react-three/fiber'),
-      '@react-three/drei': path.resolve(__dirname, '../node_modules/@react-three/drei'),
+      'three': resolveModule('three'),
+      '@react-three/fiber': resolveModule('@react-three/fiber'),
+      '@react-three/drei': resolveModule('@react-three/drei'),
     },
   },
   server: {
