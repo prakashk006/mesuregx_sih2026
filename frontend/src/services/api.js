@@ -2,8 +2,11 @@ import axios from 'axios';
 
 const getBaseURL = () => {
   const envUrl = import.meta.env.VITE_API_URL;
-  if (!envUrl) return '/api';
-  return envUrl.endsWith('/api') ? envUrl : `${envUrl.replace(/\/+$/, '')}/api`;
+  if (envUrl) {
+    return envUrl.endsWith('/api') ? envUrl : `${envUrl.replace(/\/+$/, '')}/api`;
+  }
+  // Central cloud backend shared across all laptops, Vercel, and mobile apps
+  return 'https://mesuregx-backend-w3ur.onrender.com/api';
 };
 
 const api = axios.create({
