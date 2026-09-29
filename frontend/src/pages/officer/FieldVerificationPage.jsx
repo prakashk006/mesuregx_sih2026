@@ -116,6 +116,11 @@ export default function FieldVerificationPage() {
         const app = appRes.status === 'fulfilled' ? appRes.value?.data?.data?.application : null;
         if (app) {
           setApplication(app);
+          if (app.certificate) {
+            setIssuedCert(app.certificate);
+          } else {
+            setIssuedCert(null);
+          }
           setApplications((prev) => (prev.some((a) => a.id === app.id) ? prev : [app, ...prev]));
         }
 
@@ -382,7 +387,12 @@ export default function FieldVerificationPage() {
       });
 
       if (decision === 'APPROVE') {
-        const cert = res.data?.data?.certificate;
+        let cert = res.data?.data?.certificate;
+        if (cert) {
+          if (!cert.business && application?.business) cert.business = application.business;
+          if (!cert.instrument && application?.instrument) cert.instrument = application.instrument;
+          if (!cert.application && application) cert.application = application;
+        }
         setIssuedCert(cert);
         setShowCertModal(true);
       } else {
@@ -391,12 +401,54 @@ export default function FieldVerificationPage() {
 
       // Refresh application details
       const appRes = await api.get(`/applications/${appIdToUse}`);
-      setApplication(appRes.data?.data?.application);
+      if (appRes.data?.data?.application) {
+        setApplication(appRes.data.data.application);
+      }
       setDecisionAction(null);
     } catch (err) {
       alert(err.response?.data?.message || 'Failed to record decision.');
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  // Open Certificate Modal reliably (with fallback fetch/generation)
+  const handleOpenCertificateModal = async () => {
+    let cert = application?.certificate || issuedCert;
+    if (!cert && application?.id) {
+      setSubmitting(true);
+      try {
+        const histRes = await api.get(`/certificates/application/${application.id}/history`);
+        const found = histRes.data?.data?.currentCertificate || histRes.data?.data?.certificates?.[0];
+        if (found) {
+          cert = found;
+        } else if (application.status === 'VERIFIED' || application.status === 'CERTIFICATE_ISSUED') {
+          // If status is verified or certificate was missing, auto-issue it now!
+          const decRes = await api.post(`/verifications/decision/${application.id}`, {
+            decision: 'APPROVE',
+            notes: 'Official digital certificate issued post field verification',
+          });
+          cert = decRes.data?.data?.certificate;
+          const appRes = await api.get(`/applications/${application.id}`);
+          if (appRes.data?.data?.application) {
+            setApplication(appRes.data.data.application);
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching/generating certificate:', err);
+      } finally {
+        setSubmitting(false);
+      }
+    }
+
+    if (cert) {
+      if (!cert.business && application?.business) cert.business = application.business;
+      if (!cert.instrument && application?.instrument) cert.instrument = application.instrument;
+      if (!cert.application && application) cert.application = application;
+      setIssuedCert(cert);
+      setShowCertModal(true);
+    } else {
+      alert('Unable to load certificate. Please click "Approve & Issue Certificate".');
     }
   };
 
@@ -408,11 +460,17 @@ export default function FieldVerificationPage() {
     );
   }
 
-  const isAlreadyApproved =
-    application?.status === 'CERTIFICATE_ISSUED' ||
-    application?.status === 'VERIFIED' ||
-    (application?.certificates && application.certificates.length > 0) ||
-    Boolean(issuedCert);
+  const currentCert = application?.certificate || issuedCert;
+  const isCertificateIssued = application?.status === 'CERTIFICATE_ISSUED' || Boolean(currentCert);
+  const isFieldVerifiedPending = application?.status === 'VERIFIED' && !isCertificateIssued;
+
+  // Extract lead seal if available in notes or remarks
+  const extractSealNumber = () => {
+    const text = (notes || '') + ' ' + (application?.remarks || '');
+    const match = text.match(/Seal:\s*([A-Za-z0-9_-]+)/i);
+    return match ? match[1] : null;
+  };
+  const physicalSealNumber = extractSealNumber();
 
   return (
     <div className="page-body" style={{ maxWidth: 960 }}>
@@ -948,67 +1006,102 @@ export default function FieldVerificationPage() {
         )}
 
         {/* Action Buttons or Completed Banner */}
-        {isAlreadyApproved ? (
-          <div style={{ padding: '1.25rem', backgroundColor: 'rgba(16, 185, 129, 0.12)', border: '1px solid #10b981', borderRadius: '12px', textAlign: 'center', marginTop: '1.5rem' }}>
-            <div style={{ fontSize: '1.1rem', fontWeight: '700', color: '#10b981', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
-              <CheckCircle size={22} /> Verification Complete - Certificate Issued
+        {isCertificateIssued ? (
+          <div style={{ padding: '1.5rem', backgroundColor: 'rgba(16, 185, 129, 0.12)', border: '1px solid #10b981', borderRadius: '12px', textAlign: 'center', marginTop: '1.5rem' }}>
+            <div style={{ fontSize: '1.15rem', fontWeight: '700', color: '#10b981', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+              <CheckCircle size={24} /> Verification Complete — Digital Certificate Issued
             </div>
-            <p style={{ color: 'var(--secondary-text)', fontSize: '0.85rem', marginBottom: '1rem' }}>
-              This instrument application has been verified and registered under Legal Metrology General Rules, 2011.
+            <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', justifyContent: 'center', margin: '0.75rem 0 1rem' }}>
+              {currentCert?.certificateNumber && (
+                <span className="badge badge-success" style={{ fontSize: '0.85rem', padding: '0.35rem 0.75rem' }}>
+                  Certificate No: {currentCert.certificateNumber}
+                </span>
+              )}
+              {physicalSealNumber && (
+                <span className="badge badge-info" style={{ fontSize: '0.85rem', padding: '0.35rem 0.75rem' }}>
+                  Lead Seal: {physicalSealNumber}
+                </span>
+              )}
+              {currentCert?.expiryDate && (
+                <span className="badge badge-outline" style={{ fontSize: '0.85rem', padding: '0.35rem 0.75rem', borderColor: '#10b981', color: '#10b981' }}>
+                  Valid Until: {new Date(currentCert.expiryDate).toLocaleDateString()}
+                </span>
+              )}
+            </div>
+            <p style={{ color: 'var(--secondary-text)', fontSize: '0.85rem', marginBottom: '1.25rem' }}>
+              This instrument application has been verified, digitally signed, and registered under Legal Metrology General Rules, 2011.
             </p>
             <button
               type="button"
-              className="btn btn-success"
-              onClick={() => {
-                setIssuedCert(application?.certificates?.[0] || issuedCert);
-                setShowCertModal(true);
-              }}
-            >
-              <FileText size={16} /> View & Print Digital Certificate
-            </button>
-          </div>
-        ) : !decisionAction && (
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', marginTop: '1.5rem' }}>
-            <button
-              type="button"
-              onClick={() => submitFieldVerification(true)}
-              className="btn btn-outline"
+              className="btn btn-success btn-lg"
+              onClick={handleOpenCertificateModal}
               disabled={submitting}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', fontWeight: 700 }}
             >
-              <Save size={16} /> Save Offline Draft
+              <FileText size={18} /> View & Print Digital Certificate
             </button>
-
-            <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-              <button
-                type="button"
-                onClick={() => setDecisionAction('RETEST')}
-                className="btn btn-outline"
-                style={{ color: '#d97706', borderColor: '#f59e0b' }}
-                disabled={submitting}
-              >
-                Request Re-Test
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setDecisionAction('REJECT')}
-                className="btn btn-danger"
-                disabled={submitting}
-              >
-                <XCircle size={16} /> Reject Application
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleDecisionSubmit('APPROVE')}
-                className="btn btn-success btn-lg"
-                disabled={submitting || (evaluation && evaluation.overallResult === 'FAIL')}
-                title={evaluation?.overallResult === 'FAIL' ? 'Cannot approve failing test readings' : 'Approve and generate certificate'}
-              >
-                <CheckCircle size={18} /> Approve & Issue Certificate
-              </button>
-            </div>
           </div>
+        ) : (
+          <>
+            {isFieldVerifiedPending && (
+              <div style={{ padding: '1.25rem', backgroundColor: 'rgba(59, 130, 246, 0.12)', border: '1px solid #3b82f6', borderRadius: '12px', marginTop: '1.5rem', marginBottom: '1rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+                  <div>
+                    <div style={{ fontSize: '1.05rem', fontWeight: '700', color: '#60a5fa', display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.35rem' }}>
+                      <CheckCircle size={20} /> Field Inspection Complete — Ready for Officer Sign-off
+                    </div>
+                    <p style={{ color: 'var(--secondary-text)', fontSize: '0.85rem', margin: 0 }}>
+                      Physical inspection passed on-site {physicalSealNumber ? `(Lead Seal Affixed: ${physicalSealNumber})` : ''}. Review the readings and click Approve & Issue Certificate below.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {!decisionAction && (
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', marginTop: '1.5rem' }}>
+                <button
+                  type="button"
+                  onClick={() => submitFieldVerification(true)}
+                  className="btn btn-outline"
+                  disabled={submitting}
+                >
+                  <Save size={16} /> Save Offline Draft
+                </button>
+
+                <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+                  <button
+                    type="button"
+                    onClick={() => setDecisionAction('RETEST')}
+                    className="btn btn-outline"
+                    style={{ color: '#d97706', borderColor: '#f59e0b' }}
+                    disabled={submitting}
+                  >
+                    Request Re-Test
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setDecisionAction('REJECT')}
+                    className="btn btn-danger"
+                    disabled={submitting}
+                  >
+                    <XCircle size={16} /> Reject Application
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleDecisionSubmit('APPROVE')}
+                    className="btn btn-success btn-lg"
+                    disabled={submitting || (evaluation && evaluation.overallResult === 'FAIL')}
+                    title={evaluation?.overallResult === 'FAIL' ? 'Cannot approve failing test readings' : 'Approve and generate certificate'}
+                  >
+                    <CheckCircle size={18} /> Approve & Issue Certificate
+                  </button>
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
 

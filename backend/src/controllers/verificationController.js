@@ -544,113 +544,14 @@ async function officerDecision(req, res, next) {
     }
 
     // APPROVE -> Issue Digital Certificate
-    // Determine validity period
-    const validityMonths = application.instrument.instrumentType.defaultValidityMonths || 12;
-    const issueDate = new Date();
-    const expiryDate = new Date();
-    expiryDate.setMonth(expiryDate.getMonth() + validityMonths);
-
-    // Total certificate count for numbering
-    let certSeq = (await prisma.certificate.count()) + 1;
-    let certificateNumber = generateCertificateNumber(certSeq);
-    while (await prisma.certificate.findUnique({ where: { certificateNumber } })) {
-      certSeq++;
-      certificateNumber = generateCertificateNumber(certSeq);
-    }
-
-    const baseUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
-    const qrCodeData = `${baseUrl}/verify/${certificateNumber}`;
-    const authCode = issuedByType === 'GATC' ? (gatc?.gatcCode || 'GATC') : (officer?.officerCode || 'LMO');
-    const digitalSignature = `SHA256-RSA:${Buffer.from(`${certificateNumber}|${application.instrument.customId}|${issueDate.toISOString()}|${authCode}`).toString('hex').slice(0, 48)}`;
-
-    // Version / Succession logic:
-    // Mark previous active certificates for this instrument as SUPERSEDED
-    // DO NOT overwrite or delete; retain all historical records
-    await prisma.certificate.updateMany({
-      where: {
-        instrumentId: application.instrumentId,
-        status: { in: ['VALID', 'EXPIRING_SOON'] },
-      },
-      data: {
-        status: 'SUPERSEDED',
-      },
-    });
-
-    const certificate = await prisma.certificate.upsert({
-      where: {
-        applicationId: application.id,
-      },
-      update: {
-        certificateNumber,
-        instrumentId: application.instrumentId,
-        businessId: application.businessId,
-        officerId: issuedByType === 'LMO' ? officerId : null,
-        gatcId: issuedByType === 'GATC' ? gatcId : null,
-        gatcName: issuedByType === 'GATC' ? (gatc?.name || 'Authorized GATC Laboratory') : null,
-        issuedByType,
-        issueDate,
-        expiryDate,
-        status: 'VALID',
-        qrCodeData,
-        digitalSignature,
-      },
-      create: {
-        certificateNumber,
-        applicationId: application.id,
-        instrumentId: application.instrumentId,
-        businessId: application.businessId,
-        officerId: issuedByType === 'LMO' ? officerId : null,
-        gatcId: issuedByType === 'GATC' ? gatcId : null,
-        gatcName: issuedByType === 'GATC' ? (gatc?.name || 'Authorized GATC Laboratory') : null,
-        issuedByType,
-        issueDate,
-        expiryDate,
-        status: 'VALID',
-        qrCodeData,
-        digitalSignature,
-      },
-    });
-
-
-    // Update application to CERTIFICATE_ISSUED
-    await prisma.verificationApplication.update({
-      where: { id: application.id },
-      data: { status: 'CERTIFICATE_ISSUED' },
-    });
-
-    // Update instrument to VERIFIED and link current certificate
-    await prisma.instrument.update({
-      where: { id: application.instrumentId },
-      data: {
-        status: 'VERIFIED',
-        currentCertificateId: certificate.id,
-      },
-    });
-
-    // Notify Business
-    await createNotification({
-      userId: application.business.userId,
-      title: `Certificate Issued: ${certificate.certificateNumber}`,
-      message: `Digital Verification Certificate generated for ${application.instrument.customId}. Valid until ${expiryDate.toLocaleDateString()}.`,
-      type: 'SUCCESS',
-      link: '/business/certificates',
-    });
-
-    await logAudit({
+    const certificate = await issueDigitalCertificate({
+      applicationId: application.id,
+      officerId,
+      gatcId,
+      issuedByType,
       userId: req.user.id,
       userRole: req.user.role,
-      action: 'CERTIFICATE_ISSUED',
-      entity: 'Certificate',
-      entityId: certificate.id,
-      description: `Certificate ${certificate.certificateNumber} issued for ${application.instrument.customId} by ${officer?.name || gatc?.name || 'Authorized Official'}.`,
       ipAddress: req.ip,
-    });
-
-    // Email dispatch (graceful)
-    await sendEmail({
-      to: application.business.email,
-      subject: `[MESUREGX] Verification Certificate Issued: ${certificate.certificateNumber}`,
-      text: `Dear ${application.business.ownerName},\n\nCongratulations! Your instrument ${application.instrument.customId} has passed legal metrology field verification.\n\nCertificate No: ${certificate.certificateNumber}\nValid Until: ${expiryDate.toLocaleDateString()}\nVerify online: ${qrCodeData}\n\nRegards,\nDepartment of Legal Metrology`,
     });
 
     res.json({
@@ -666,6 +567,179 @@ async function officerDecision(req, res, next) {
   }
 }
 
+/**
+ * Reusable Digital Certificate Issuance Engine
+ */
+async function issueDigitalCertificate({
+  applicationId,
+  officerId = null,
+  gatcId = null,
+  issuedByType = 'LMO',
+  userId = null,
+  userRole = 'OFFICER',
+  ipAddress = '127.0.0.1',
+}) {
+  const application = await prisma.verificationApplication.findFirst({
+    where: {
+      OR: [{ id: applicationId }, { applicationNumber: applicationId }],
+    },
+    include: {
+      business: true,
+      instrument: { include: { instrumentType: true } },
+    },
+  });
+
+  if (!application) {
+    throw new Error('Application not found for certificate issuance.');
+  }
+
+  let officer = null;
+  let gatc = null;
+
+  if (issuedByType === 'GATC' && gatcId) {
+    gatc = await prisma.gatc.findUnique({ where: { id: gatcId } });
+  } else if (officerId) {
+    officer = await prisma.officer.findUnique({ where: { id: officerId } });
+  }
+
+  if (!officer && !gatc) {
+    const assignment = await prisma.assignment.findUnique({ where: { applicationId: application.id } });
+    if (assignment?.officerId) {
+      officer = await prisma.officer.findUnique({ where: { id: assignment.officerId } });
+      officerId = officer?.id;
+    }
+    if (!officer) {
+      officer = await prisma.officer.findFirst({ where: { status: 'ACTIVE' } });
+      officerId = officer?.id;
+    }
+  }
+
+  // Determine validity period
+  const validityMonths = application.instrument.instrumentType?.defaultValidityMonths || 12;
+  const issueDate = new Date();
+  const expiryDate = new Date();
+  expiryDate.setMonth(expiryDate.getMonth() + validityMonths);
+
+  // Total certificate count for numbering
+  let certSeq = (await prisma.certificate.count()) + 1;
+  let certificateNumber = generateCertificateNumber(certSeq);
+  while (await prisma.certificate.findUnique({ where: { certificateNumber } })) {
+    certSeq++;
+    certificateNumber = generateCertificateNumber(certSeq);
+  }
+
+  const baseUrl = process.env.FRONTEND_URL || 'https://mesuregx-frontend.vercel.app';
+  const qrCodeData = `${baseUrl}/verify/${certificateNumber}`;
+  const authCode = issuedByType === 'GATC' ? (gatc?.gatcCode || 'GATC') : (officer?.officerCode || 'LMO');
+  const digitalSignature = `SHA256-RSA:${Buffer.from(`${certificateNumber}|${application.instrument.customId}|${issueDate.toISOString()}|${authCode}`).toString('hex').slice(0, 48)}`;
+
+  // Version / Succession logic:
+  // Mark previous active certificates for this instrument as SUPERSEDED
+  await prisma.certificate.updateMany({
+    where: {
+      instrumentId: application.instrumentId,
+      status: { in: ['VALID', 'EXPIRING_SOON'] },
+    },
+    data: {
+      status: 'SUPERSEDED',
+    },
+  });
+
+  const certificate = await prisma.certificate.upsert({
+    where: {
+      applicationId: application.id,
+    },
+    update: {
+      certificateNumber,
+      instrumentId: application.instrumentId,
+      businessId: application.businessId,
+      officerId: issuedByType === 'LMO' ? officerId : null,
+      gatcId: issuedByType === 'GATC' ? gatcId : null,
+      gatcName: issuedByType === 'GATC' ? (gatc?.name || 'Authorized GATC Laboratory') : null,
+      issuedByType,
+      issueDate,
+      expiryDate,
+      status: 'VALID',
+      qrCodeData,
+      digitalSignature,
+    },
+    create: {
+      certificateNumber,
+      applicationId: application.id,
+      instrumentId: application.instrumentId,
+      businessId: application.businessId,
+      officerId: issuedByType === 'LMO' ? officerId : null,
+      gatcId: issuedByType === 'GATC' ? gatcId : null,
+      gatcName: issuedByType === 'GATC' ? (gatc?.name || 'Authorized GATC Laboratory') : null,
+      issuedByType,
+      issueDate,
+      expiryDate,
+      status: 'VALID',
+      qrCodeData,
+      digitalSignature,
+    },
+    include: {
+      officer: true,
+      gatc: true,
+      business: true,
+      instrument: {
+        include: {
+          instrumentType: true,
+        },
+      },
+    },
+  });
+
+  // Update application to CERTIFICATE_ISSUED
+  await prisma.verificationApplication.update({
+    where: { id: application.id },
+    data: { status: 'CERTIFICATE_ISSUED' },
+  });
+
+  // Update instrument to VERIFIED and link current certificate
+  await prisma.instrument.update({
+    where: { id: application.instrumentId },
+    data: {
+      status: 'VERIFIED',
+      currentCertificateId: certificate.id,
+    },
+  });
+
+  // Notify Business
+  if (application.business?.userId) {
+    createNotification({
+      userId: application.business.userId,
+      title: `Certificate Issued: ${certificate.certificateNumber}`,
+      message: `Digital Verification Certificate generated for ${application.instrument.customId}. Valid until ${expiryDate.toLocaleDateString()}.`,
+      type: 'SUCCESS',
+      link: '/business/certificates',
+    }).catch(() => {});
+  }
+
+  if (userId) {
+    logAudit({
+      userId,
+      userRole,
+      action: 'CERTIFICATE_ISSUED',
+      entity: 'Certificate',
+      entityId: certificate.id,
+      description: `Certificate ${certificate.certificateNumber} issued for ${application.instrument.customId} by ${officer?.name || gatc?.name || 'Authorized Official'}.`,
+      ipAddress,
+    }).catch(() => {});
+  }
+
+  // Email dispatch (graceful)
+  if (application.business?.email) {
+    sendEmail({
+      to: application.business.email,
+      subject: `[MESUREGX] Verification Certificate Issued: ${certificate.certificateNumber}`,
+      text: `Dear ${application.business.ownerName},\n\nCongratulations! Your instrument ${application.instrument.customId} has passed legal metrology field verification.\n\nCertificate No: ${certificate.certificateNumber}\nValid Until: ${expiryDate.toLocaleDateString()}\nVerify online: ${qrCodeData}\n\nRegards,\nDepartment of Legal Metrology`,
+    }).catch(() => {});
+  }
+
+  return certificate;
+}
+
 module.exports = {
   evaluateLive,
   getVerificationByAppId,
@@ -673,4 +747,5 @@ module.exports = {
   uploadEvidence,
   deleteEvidence,
   officerDecision,
+  issueDigitalCertificate,
 };

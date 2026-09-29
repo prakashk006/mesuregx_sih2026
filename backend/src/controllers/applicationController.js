@@ -265,6 +265,13 @@ async function getApplicationById(req, res, next) {
         certificate: {
           include: {
             officer: true,
+            gatc: true,
+            business: true,
+            instrument: {
+              include: {
+                instrumentType: true,
+              },
+            },
           },
         },
       },
