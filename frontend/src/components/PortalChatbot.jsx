@@ -1,45 +1,94 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  MessageSquare,
   X,
   Send,
   Sparkles,
   ChevronRight,
   ExternalLink,
   RotateCcw,
-  ShieldCheck,
-  Award,
+  Volume2,
+  VolumeX,
+  Copy,
+  Check,
+  ArrowRight,
   HelpCircle,
-  BookOpen,
-  ArrowRight
 } from 'lucide-react';
+import ToyBotAvatar from './ToyBotAvatar';
 import { queryKnowledgeBase } from '../services/chatbotKnowledgeBase';
+
+/**
+ * Web Audio API Subtle Chime Synthesizer
+ * Provides soft pleasant auditory feedback with 0 external audio files
+ */
+function playSoftChime(type = 'receive') {
+  try {
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContext) return;
+    const ctx = new AudioContext();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    if (type === 'send') {
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(440, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.08);
+      gain.gain.setValueAtTime(0.05, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.08);
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + 0.08);
+    } else {
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(587.33, ctx.currentTime); // D5
+      osc.frequency.setValueAtTime(880, ctx.currentTime + 0.06); // A5
+      gain.gain.setValueAtTime(0.06, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.16);
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + 0.16);
+    }
+  } catch (e) {
+    // Audio contexts might be blocked before first user gesture
+  }
+}
 
 export default function PortalChatbot() {
   const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState([
-    {
-      id: 'welcome',
-      sender: 'bot',
-      text: 'Namaste! 🙏 I am MesureBot, your official MESUREGX Portal Guide. How can I assist you with Legal Metrology services today?',
-      chips: [
-        '📝 How do I apply for verification?',
-        '🔍 How to verify a scale QR code?',
-        '📱 How does mobile field inspection work?',
-        '🔐 What is physical lead sealing?',
-        '🎯 What is MESUREGX?',
-      ],
-      links: [
-        { label: 'Apply for Verification', url: '/business/applications/new' },
-        { label: 'Public QR Verification', url: '/verify' },
-      ],
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-    },
-  ]);
+  const [soundEnabled, setSoundEnabled] = useState(true);
+  const [botExpression, setBotExpression] = useState('idle'); // 'idle' | 'thinking' | 'happy'
+  const [copiedId, setCopiedId] = useState(null);
+  const [speechBubbleVisible, setSpeechBubbleVisible] = useState(true);
+
+  const initialWelcome = {
+    id: 'welcome',
+    sender: 'bot',
+    badge: '👋 Assistant Welcome',
+    title: 'Namaste! I am Mesuri, your Metrology AI Guide',
+    text: 'I am here to guide you through the MESUREGX Portal and the Legal Metrology verification lifecycle. What would you like to know?',
+    bullets: [
+      '⚖️ Learn what a Legal Metrology Officer (Inspector) does on-site.',
+      '📝 Understand how traders apply for instrument verification.',
+      '💰 Check statutory fee schedules and Treasury Challan rules.',
+      '🔍 Learn how consumers verify scale accuracy via QR stickers.',
+    ],
+    chips: [
+      '⚖️ Who is the Legal Metrology Officer?',
+      '📝 How do I apply for scale verification?',
+      '💰 How are verification fees calculated?',
+      '🔍 How to verify a scale QR code?',
+      '🔒 What is physical lead sealing?',
+      '🎯 What is MESUREGX?',
+    ],
+    timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+  };
+
+  const [messages, setMessages] = useState([initialWelcome]);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef(null);
+  const inputRef = useRef(null);
   const navigate = useNavigate();
 
   const scrollToBottom = () => {
@@ -49,12 +98,15 @@ export default function PortalChatbot() {
   useEffect(() => {
     if (isOpen) {
       scrollToBottom();
+      inputRef.current?.focus();
     }
-  }, [messages, isOpen]);
+  }, [messages, isOpen, isTyping]);
 
   const handleSend = (textToSend = null) => {
     const queryText = (textToSend || input).trim();
     if (!queryText) return;
+
+    if (soundEnabled) playSoftChime('send');
 
     // Add user message
     const userMsg = {
@@ -67,36 +119,35 @@ export default function PortalChatbot() {
     setMessages((prev) => [...prev, userMsg]);
     setInput('');
     setIsTyping(true);
+    setBotExpression('thinking');
 
     // Simulate natural AI thinking delay
     setTimeout(() => {
       const response = queryKnowledgeBase(queryText);
-      let botMsg = {
+
+      const botMsg = {
         id: `bot-${Date.now()}`,
         sender: 'bot',
+        badge: response.badge,
+        title: response.title,
+        text: response.answer,
+        bullets: response.bullets,
+        links: response.links,
+        chips: response.suggestedChips,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       };
 
-      if (response.type === 'GUIDE') {
-        botMsg.title = response.title;
-        botMsg.steps = response.steps;
-        botMsg.links = response.links;
-      } else if (response.type === 'FAQ' || response.type === 'CUSTOM') {
-        botMsg.title = response.title;
-        botMsg.text = response.answer;
-        botMsg.links = response.links;
-      } else if (response.type === 'SERVICES_LIST') {
-        botMsg.title = response.title;
-        botMsg.services = response.services;
-      } else {
-        botMsg.title = response.title;
-        botMsg.text = response.answer;
-        botMsg.chips = response.suggestedChips;
-      }
-
       setMessages((prev) => [...prev, botMsg]);
       setIsTyping(false);
-    }, 380);
+      setBotExpression('happy');
+
+      if (soundEnabled) playSoftChime('receive');
+
+      // Return to idle after a pleasant moment
+      setTimeout(() => {
+        setBotExpression('idle');
+      }, 2500);
+    }, 450);
   };
 
   const handleLinkClick = (url) => {
@@ -107,7 +158,6 @@ export default function PortalChatbot() {
     } else {
       navigate(url);
     }
-    // On small screens, close the chat modal when navigating
     if (window.innerWidth < 640) {
       setIsOpen(false);
     }
@@ -118,11 +168,13 @@ export default function PortalChatbot() {
       {
         id: `welcome-${Date.now()}`,
         sender: 'bot',
-        text: 'Chat history cleared. How can I help you navigate the MESUREGX Portal?',
+        badge: '🔄 History Reset',
+        title: 'Chat History Cleared',
+        text: 'How can I assist you with Legal Metrology services or navigating the portal?',
         chips: [
+          '⚖️ Who is the Legal Metrology Officer?',
           '📝 How do I apply for verification?',
-          '🔍 How to verify a scale QR code?',
-          '📱 How does mobile field inspection work?',
+          '💰 How are fees calculated?',
           '🎯 What is MESUREGX?',
         ],
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
@@ -130,61 +182,41 @@ export default function PortalChatbot() {
     ]);
   };
 
+  const handleCopyText = (msgId, text, bullets = []) => {
+    const fullText = `${text}\n\n${bullets ? bullets.join('\n') : ''}`.trim();
+    navigator.clipboard.writeText(fullText);
+    setCopiedId(msgId);
+    setTimeout(() => setCopiedId(null), 2000);
+  };
+
   return (
     <>
-      {/* 1. Floating Launcher Button (Always visible on bottom right) */}
+      {/* 1. FLOATING TOY BOT LAUNCHER (Always active on bottom right when closed) */}
       {!isOpen && (
-        <button
-          type="button"
-          onClick={() => setIsOpen(true)}
+        <div
           style={{
             position: 'fixed',
             bottom: '24px',
             right: '24px',
             zIndex: 9999,
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.65rem',
-            padding: '0.85rem 1.35rem',
-            backgroundColor: '#064E3B',
-            color: '#FFFFFF',
-            border: '2px solid rgba(16, 185, 129, 0.4)',
-            borderRadius: '999px',
-            boxShadow: '0 8px 24px rgba(6, 78, 59, 0.45), 0 2px 6px rgba(0,0,0,0.15)',
-            cursor: 'pointer',
-            transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
-            fontFamily: 'inherit',
           }}
-          className="hover:scale-105 active:scale-95"
-          aria-label="Open MESUREGX Assistant"
         >
-          <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-            <MessageSquare size={20} color="#10B981" />
-            <span
-              style={{
-                position: 'absolute',
-                top: -3,
-                right: -3,
-                width: 8,
-                height: 8,
-                backgroundColor: '#10B981',
-                borderRadius: '50%',
-                border: '1.5px solid #064E3B',
-              }}
-            />
-          </div>
-          <div style={{ textAlign: 'left' }}>
-            <span style={{ display: 'block', fontSize: '0.85rem', fontWeight: 800, letterSpacing: '0.01em', lineHeight: 1.2 }}>
-              Ask MesureBot
-            </span>
-            <span style={{ display: 'block', fontSize: '0.68rem', color: '#A7F3D0', fontWeight: 500 }}>
-              Official Portal Guide
-            </span>
-          </div>
-        </button>
+          <ToyBotAvatar
+            size={64}
+            expression="idle"
+            isFloating={true}
+            showSpeechBubble={speechBubbleVisible}
+            bubbleText="👋 Ask Mesuri AI!"
+            onBubbleClick={() => setIsOpen(true)}
+            onClick={() => {
+              setIsOpen(true);
+              setSpeechBubbleVisible(false);
+            }}
+          />
+        </div>
       )}
 
-      {/* 2. Expanded Interactive Chatbot Window */}
+      {/* 2. EXPANDED INTERACTIVE CHAT WINDOW */}
       {isOpen && (
         <div
           style={{
@@ -194,106 +226,151 @@ export default function PortalChatbot() {
             width: '92vw',
             maxWidth: '430px',
             height: '620px',
-            maxHeight: '85vh',
+            maxHeight: '86vh',
             backgroundColor: '#FFFFFF',
-            borderRadius: '20px',
-            boxShadow: '0 20px 40px rgba(15, 23, 42, 0.25), 0 0 0 1px rgba(15, 23, 42, 0.08)',
+            borderRadius: '24px',
+            boxShadow: '0 20px 48px rgba(15, 23, 42, 0.28), 0 0 0 1px rgba(15, 23, 42, 0.08)',
             display: 'flex',
             flexDirection: 'column',
             overflow: 'hidden',
             zIndex: 9999,
-            animation: 'fadeInUp 0.3s ease-out',
+            animation: 'toyBotFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
             fontFamily: 'inherit',
           }}
         >
-          {/* Header Bar */}
+          {/* Top Header with Interactive Toy Bot Mascot */}
           <div
             style={{
-              padding: '1rem 1.25rem',
-              background: 'linear-gradient(135deg, #064E3B 0%, #065F46 100%)',
+              padding: '0.85rem 1.15rem',
+              background: 'linear-gradient(135deg, #064E3B 0%, #0F766E 100%)',
               color: '#FFFFFF',
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
-              borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+              borderBottom: '1px solid rgba(255, 255, 255, 0.12)',
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              {/* Mascot Head inside Header */}
               <div
                 style={{
-                  width: 38,
-                  height: 38,
-                  borderRadius: '10px',
-                  backgroundColor: 'rgba(255, 255, 255, 0.12)',
+                  width: 44,
+                  height: 44,
+                  borderRadius: '14px',
+                  backgroundColor: 'rgba(255, 255, 255, 0.14)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                  border: '1px solid rgba(255, 255, 255, 0.25)',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
                 }}
               >
-                <Sparkles size={20} color="#10B981" />
+                <ToyBotAvatar size={40} expression={botExpression} isFloating={false} />
               </div>
+
               <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                  <span style={{ fontWeight: 800, fontSize: '0.95rem' }}>MesureBot Guide</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                  <span style={{ fontWeight: 800, fontSize: '0.98rem', letterSpacing: '0.01em' }}>
+                    Mesuri
+                  </span>
                   <span
                     style={{
                       fontSize: '0.62rem',
-                      padding: '0.1rem 0.4rem',
-                      borderRadius: '999px',
-                      backgroundColor: 'rgba(16, 185, 129, 0.25)',
-                      color: '#A7F3D0',
-                      fontWeight: 700,
+                      fontWeight: 800,
+                      backgroundColor: '#10B981',
+                      color: '#064E3B',
+                      padding: '0.12rem 0.4rem',
+                      borderRadius: '4px',
                     }}
                   >
-                    AI GUIDE
+                    AI BOT
                   </span>
                 </div>
-                <span style={{ fontSize: '0.72rem', color: '#D1FAE5' }}>
-                  Legal Metrology Portal Assistant • 24/7
-                </span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', marginTop: '1px' }}>
+                  <span
+                    style={{
+                      width: 7,
+                      height: 7,
+                      borderRadius: '50%',
+                      backgroundColor: isTyping ? '#38BDF8' : '#34D399',
+                      display: 'inline-block',
+                      boxShadow: '0 0 6px #34D399',
+                    }}
+                  />
+                  <span style={{ fontSize: '0.7rem', color: '#D1FAE5', fontWeight: 500 }}>
+                    {isTyping ? 'Thinking & Explaining...' : 'Online & Ready'}
+                  </span>
+                </div>
               </div>
             </div>
 
+            {/* Header Action Controls */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
               <button
                 type="button"
-                onClick={handleClearChat}
-                title="Restart Conversation"
+                onClick={() => setSoundEnabled(!soundEnabled)}
+                title={soundEnabled ? 'Mute Chimes' : 'Enable Chimes'}
                 style={{
                   background: 'none',
                   border: 'none',
-                  color: 'rgba(255, 255, 255, 0.7)',
-                  cursor: 'pointer',
+                  color: soundEnabled ? '#6EE7B7' : '#9CA3AF',
                   padding: '6px',
+                  cursor: 'pointer',
                   borderRadius: '6px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                {soundEnabled ? <Volume2 size={16} /> : <VolumeX size={16} />}
+              </button>
+
+              <button
+                type="button"
+                onClick={handleClearChat}
+                title="Reset Chat"
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: '#D1FAE5',
+                  padding: '6px',
+                  cursor: 'pointer',
+                  borderRadius: '6px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
                 }}
               >
                 <RotateCcw size={16} />
               </button>
+
               <button
                 type="button"
                 onClick={() => setIsOpen(false)}
-                title="Close"
+                title="Minimize Chat"
                 style={{
-                  background: 'none',
+                  background: 'rgba(255, 255, 255, 0.15)',
                   border: 'none',
                   color: '#FFFFFF',
-                  cursor: 'pointer',
                   padding: '6px',
-                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  borderRadius: '8px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginLeft: '4px',
                 }}
               >
-                <X size={20} />
+                <X size={18} />
               </button>
             </div>
           </div>
 
-          {/* Conversation Stream */}
+          {/* Messages Stream */}
           <div
             style={{
               flex: 1,
-              padding: '1.25rem',
+              padding: '1rem',
               overflowY: 'auto',
               backgroundColor: '#F8FAFC',
               display: 'flex',
@@ -301,226 +378,295 @@ export default function PortalChatbot() {
               gap: '1rem',
             }}
           >
-            {messages.map((m) => (
-              <div
-                key={m.id}
-                style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: m.sender === 'user' ? 'flex-end' : 'flex-start',
-                }}
-              >
-                {/* Message Bubble */}
+            {messages.map((m) => {
+              const isBot = m.sender === 'bot';
+              return (
                 <div
+                  key={m.id}
                   style={{
-                    maxWidth: '86%',
-                    padding: '0.85rem 1.1rem',
-                    borderRadius: m.sender === 'user' ? '16px 16px 2px 16px' : '16px 16px 16px 2px',
-                    backgroundColor: m.sender === 'user' ? '#064E3B' : '#FFFFFF',
-                    color: m.sender === 'user' ? '#FFFFFF' : '#1E293B',
-                    boxShadow: m.sender === 'user' ? '0 2px 8px rgba(6, 78, 59, 0.25)' : '0 2px 8px rgba(0, 0, 0, 0.05)',
-                    border: m.sender === 'user' ? 'none' : '1px solid #E2E8F0',
-                    fontSize: '0.88rem',
-                    lineHeight: 1.5,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: isBot ? 'flex-start' : 'flex-end',
+                    maxWidth: '100%',
                   }}
                 >
-                  {m.title && (
+                  {/* Sender Badge */}
+                  <div
+                    style={{
+                      fontSize: '0.66rem',
+                      color: '#64748B',
+                      marginBottom: '3px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.35rem',
+                      padding: '0 4px',
+                    }}
+                  >
+                    <span>{isBot ? '🤖 Mesuri AI' : '👤 You'}</span>
+                    <span>•</span>
+                    <span>{m.timestamp}</span>
+                  </div>
+
+                  {/* Message Bubble Card */}
+                  <div
+                    style={{
+                      maxWidth: '92%',
+                      backgroundColor: isBot ? '#FFFFFF' : '#064E3B',
+                      color: isBot ? '#1E293B' : '#FFFFFF',
+                      padding: '0.85rem 1rem',
+                      borderRadius: '16px',
+                      borderTopLeftRadius: isBot ? '4px' : '16px',
+                      borderTopRightRadius: isBot ? '16px' : '4px',
+                      boxShadow: isBot
+                        ? '0 2px 8px rgba(15, 23, 42, 0.06), 0 0 0 1px rgba(15, 23, 42, 0.05)'
+                        : '0 4px 12px rgba(6, 78, 59, 0.25)',
+                      lineHeight: 1.5,
+                      fontSize: '0.85rem',
+                      position: 'relative',
+                    }}
+                  >
+                    {/* Bot Topic Badge */}
+                    {isBot && m.badge && (
+                      <div
+                        style={{
+                          display: 'inline-block',
+                          fontSize: '0.68rem',
+                          fontWeight: 800,
+                          color: '#047857',
+                          backgroundColor: '#ECFDF5',
+                          border: '1px solid #A7F3D0',
+                          padding: '0.15rem 0.5rem',
+                          borderRadius: '6px',
+                          marginBottom: '0.5rem',
+                          letterSpacing: '0.02em',
+                        }}
+                      >
+                        {m.badge}
+                      </div>
+                    )}
+
+                    {/* Bot Topic Title */}
+                    {isBot && m.title && (
+                      <div
+                        style={{
+                          fontWeight: 800,
+                          fontSize: '0.92rem',
+                          color: '#064E3B',
+                          marginBottom: '0.45rem',
+                          lineHeight: 1.3,
+                        }}
+                      >
+                        {m.title}
+                      </div>
+                    )}
+
+                    {/* Main Text Content */}
+                    {m.text && (
+                      <div style={{ whiteSpace: 'pre-line', marginBottom: m.bullets ? '0.6rem' : '0' }}>
+                        {m.text}
+                      </div>
+                    )}
+
+                    {/* Bullet Explanations */}
+                    {m.bullets && m.bullets.length > 0 && (
+                      <div
+                        style={{
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '0.45rem',
+                          marginTop: '0.5rem',
+                          paddingTop: '0.5rem',
+                          borderTop: '1px solid #F1F5F9',
+                        }}
+                      >
+                        {m.bullets.map((b, bIdx) => (
+                          <div
+                            key={bIdx}
+                            style={{
+                              fontSize: '0.81rem',
+                              color: '#334155',
+                              lineHeight: 1.45,
+                              backgroundColor: '#F8FAFC',
+                              padding: '0.4rem 0.6rem',
+                              borderRadius: '8px',
+                              borderLeft: '3px solid #10B981',
+                            }}
+                          >
+                            {b}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Action Links */}
+                    {m.links && m.links.length > 0 && (
+                      <div
+                        style={{
+                          display: 'flex',
+                          flexWrap: 'wrap',
+                          gap: '0.45rem',
+                          marginTop: '0.75rem',
+                          paddingTop: '0.55rem',
+                          borderTop: '1px solid #F1F5F9',
+                        }}
+                      >
+                        {m.links.map((lnk, lIdx) => (
+                          <button
+                            key={lIdx}
+                            type="button"
+                            onClick={() => handleLinkClick(lnk.url)}
+                            style={{
+                              backgroundColor: '#064E3B',
+                              color: '#FFFFFF',
+                              border: 'none',
+                              padding: '0.35rem 0.75rem',
+                              borderRadius: '6px',
+                              fontSize: '0.74rem',
+                              fontWeight: 700,
+                              cursor: 'pointer',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '0.3rem',
+                              boxShadow: '0 2px 4px rgba(6, 78, 59, 0.2)',
+                            }}
+                          >
+                            <span>{lnk.label}</span>
+                            <ArrowRight size={12} />
+                          </button>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Copy Button for Bot Messages */}
+                    {isBot && (
+                      <button
+                        type="button"
+                        onClick={() => handleCopyText(m.id, m.text || m.title, m.bullets)}
+                        title="Copy Explanation"
+                        style={{
+                          position: 'absolute',
+                          top: '8px',
+                          right: '8px',
+                          background: 'none',
+                          border: 'none',
+                          color: copiedId === m.id ? '#10B981' : '#94A3B8',
+                          padding: '4px',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}
+                      >
+                        {copiedId === m.id ? <Check size={14} /> : <Copy size={14} />}
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Suggestion Chips Below Bot Response */}
+                  {isBot && m.chips && m.chips.length > 0 && (
                     <div
                       style={{
-                        fontWeight: 800,
-                        color: m.sender === 'user' ? '#A7F3D0' : '#064E3B',
-                        marginBottom: '0.5rem',
-                        fontSize: '0.9rem',
                         display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.35rem',
+                        flexWrap: 'wrap',
+                        gap: '0.4rem',
+                        marginTop: '0.65rem',
+                        maxWidth: '92%',
                       }}
                     >
-                      <BookOpen size={16} /> {m.title}
-                    </div>
-                  )}
-
-                  {m.text && <div style={{ whiteSpace: 'pre-line' }}>{m.text}</div>}
-
-                  {/* Step by step numbered list */}
-                  {m.steps && (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', marginTop: '0.35rem' }}>
-                      {m.steps.map((st, i) => (
-                        <div key={i} style={{ fontSize: '0.84rem', color: '#334155', lineHeight: 1.45 }}>
-                          {st}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* Services List Preview */}
-                  {m.services && (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', marginTop: '0.5rem' }}>
-                      {m.services.map((s) => (
-                        <div
-                          key={s.id}
-                          style={{
-                            padding: '0.65rem',
-                            backgroundColor: '#F1F5F9',
-                            borderRadius: '8px',
-                            border: '1px solid #CBD5E1',
-                          }}
-                        >
-                          <div style={{ fontWeight: 700, color: '#064E3B', fontSize: '0.82rem' }}>{s.title}</div>
-                          <div style={{ fontSize: '0.76rem', color: '#64748B', marginTop: 2 }}>{s.description}</div>
-                          {s.link && (
-                            <button
-                              type="button"
-                              onClick={() => handleLinkClick(s.link)}
-                              style={{
-                                marginTop: '0.4rem',
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: '0.25rem',
-                                color: '#047857',
-                                fontSize: '0.75rem',
-                                fontWeight: 700,
-                                background: 'none',
-                                border: 'none',
-                                cursor: 'pointer',
-                                padding: 0,
-                              }}
-                            >
-                              {s.actionText || 'Go to Page'} <ArrowRight size={12} />
-                            </button>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* Deep-link Action Buttons */}
-                  {m.links && m.links.length > 0 && (
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', marginTop: '0.75rem' }}>
-                      {m.links.map((lnk, idx) => (
+                      {m.chips.map((chip, cIdx) => (
                         <button
-                          key={idx}
+                          key={cIdx}
                           type="button"
-                          onClick={() => handleLinkClick(lnk.url)}
+                          onClick={() => handleSend(chip)}
                           style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '0.35rem',
-                            padding: '0.35rem 0.75rem',
-                            backgroundColor: '#ECFDF5',
-                            color: '#065F46',
-                            border: '1px solid #10B981',
+                            backgroundColor: '#FFFFFF',
+                            color: '#064E3B',
+                            border: '1px solid #CBD5E1',
+                            padding: '0.35rem 0.7rem',
                             borderRadius: '999px',
-                            fontSize: '0.76rem',
-                            fontWeight: 700,
+                            fontSize: '0.73rem',
+                            fontWeight: 600,
                             cursor: 'pointer',
-                            transition: 'all 0.15s ease',
+                            transition: 'all 0.2s ease',
+                            boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
                           }}
+                          className="hover:border-emerald-600 hover:bg-emerald-50 active:scale-95"
                         >
-                          {lnk.label} <ExternalLink size={11} />
+                          {chip}
                         </button>
                       ))}
                     </div>
                   )}
+                </div>
+              );
+            })}
 
-                  <span
-                    style={{
-                      display: 'block',
-                      textAlign: 'right',
-                      fontSize: '0.65rem',
-                      color: m.sender === 'user' ? '#A7F3D0' : '#94A3B8',
-                      marginTop: '0.35rem',
-                    }}
-                  >
-                    {m.timestamp}
+            {/* Thinking / Scanning Loading Indicator */}
+            {isTyping && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.4rem' }}>
+                <div
+                  style={{
+                    backgroundColor: '#FFFFFF',
+                    padding: '0.65rem 0.95rem',
+                    borderRadius: '16px',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                  }}
+                >
+                  <ToyBotAvatar size={24} expression="thinking" isFloating={false} />
+                  <span style={{ fontSize: '0.78rem', color: '#0F766E', fontWeight: 600 }}>
+                    Mesuri is formulating an explanation...
                   </span>
                 </div>
-
-                {/* Suggested Chips below bot messages */}
-                {m.chips && (
-                  <div
-                    style={{
-                      display: 'flex',
-                      flexWrap: 'wrap',
-                      gap: '0.4rem',
-                      marginTop: '0.6rem',
-                      maxWidth: '96%',
-                    }}
-                  >
-                    {m.chips.map((chip, idx) => (
-                      <button
-                        key={idx}
-                        type="button"
-                        onClick={() => handleSend(chip)}
-                        style={{
-                          padding: '0.4rem 0.75rem',
-                          backgroundColor: '#FFFFFF',
-                          color: '#0F766E',
-                          border: '1px solid #99F6E4',
-                          borderRadius: '999px',
-                          fontSize: '0.74rem',
-                          fontWeight: 600,
-                          cursor: 'pointer',
-                          boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
-                          transition: 'all 0.15s ease',
-                          textAlign: 'left',
-                        }}
-                      >
-                        {chip}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ))}
-
-            {isTyping && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.5rem 0.75rem', color: '#64748B', fontSize: '0.78rem' }}>
-                <Sparkles size={14} className="animate-spin" color="#10B981" />
-                <span>MesureBot is finding statutory information...</span>
               </div>
             )}
+
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Input Bar */}
+          {/* Bottom Chat Input Form */}
           <form
             onSubmit={(e) => {
               e.preventDefault();
               handleSend();
             }}
             style={{
-              padding: '0.85rem 1.1rem',
+              padding: '0.75rem 1rem',
               backgroundColor: '#FFFFFF',
               borderTop: '1px solid #E2E8F0',
               display: 'flex',
-              alignItems: 'center',
               gap: '0.5rem',
+              alignItems: 'center',
             }}
           >
             <input
+              ref={inputRef}
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="Ask about applying, QR verify, fees, rules..."
+              placeholder="Ask anything about portal, officers, verification..."
               style={{
                 flex: 1,
                 padding: '0.65rem 0.95rem',
-                border: '1px solid #CBD5E1',
-                borderRadius: '12px',
+                border: '1.5px solid #CBD5E1',
+                borderRadius: '999px',
                 fontSize: '0.85rem',
                 outline: 'none',
+                transition: 'border-color 0.2s',
                 color: '#1E293B',
-                backgroundColor: '#F8FAFC',
               }}
+              className="focus:border-emerald-600"
             />
+
             <button
               type="submit"
               disabled={!input.trim()}
               style={{
-                width: 38,
-                height: 38,
-                borderRadius: '10px',
+                width: 40,
+                height: 40,
+                borderRadius: '50%',
                 backgroundColor: input.trim() ? '#064E3B' : '#E2E8F0',
                 color: input.trim() ? '#FFFFFF' : '#94A3B8',
                 border: 'none',
@@ -528,7 +674,7 @@ export default function PortalChatbot() {
                 alignItems: 'center',
                 justifyContent: 'center',
                 cursor: input.trim() ? 'pointer' : 'default',
-                transition: 'all 0.15s ease',
+                transition: 'all 0.2s ease',
               }}
             >
               <Send size={16} />
@@ -536,6 +682,20 @@ export default function PortalChatbot() {
           </form>
         </div>
       )}
+
+      {/* Animation Styles */}
+      <style>{`
+        @keyframes toyBotFadeIn {
+          from {
+            opacity: 0;
+            transform: translateY(16px) scale(0.96);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0px) scale(1);
+          }
+        }
+      `}</style>
     </>
   );
 }
