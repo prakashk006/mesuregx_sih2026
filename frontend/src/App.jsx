@@ -8,6 +8,7 @@ import DashboardHeader from './components/DashboardHeader';
 import PublicNavbar from './components/PublicNavbar';
 import Sidebar from './components/Sidebar';
 import MobileBottomNav from './components/MobileBottomNav';
+import PortalChatbot from './components/PortalChatbot';
 
 // Public Pages
 import LandingPage from './pages/LandingPage';
@@ -517,6 +518,7 @@ export default function App() {
             {/* Catch-All Fallback */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
+          <PortalChatbot />
         </BrowserRouter>
       </SidebarProvider>
     </AuthProvider>

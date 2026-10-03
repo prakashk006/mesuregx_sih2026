@@ -17,6 +17,7 @@ import QRScannerModal from '../components/QRScannerModal';
 // Modular Components
 import HeroSection from '../components/home/HeroSection';
 import VerificationJourney from '../components/home/VerificationJourney';
+import SectorShowcase from '../components/home/SectorShowcase';
 import StatsPanel from '../components/home/StatsPanel';
 import NetworkSection from '../components/home/NetworkSection';
 import AudienceCards from '../components/home/AudienceCards';
@@ -163,7 +164,12 @@ export default function LandingPage() {
         <VerificationJourney />
       </div>
 
-      {/* 5. LIVE PLATFORM METRICS */}
+      {/* 5. LEGAL METROLOGY SECTOR PHOTOGRAPHY & STORIES */}
+      <div className="reveal-section">
+        <SectorShowcase />
+      </div>
+
+      {/* 6. LIVE PLATFORM METRICS */}
       <div className="reveal-section">
         <StatsPanel />
       </div>
