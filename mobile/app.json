@@ -1,0 +1,60 @@
+{
+  "expo": {
+    "name": "MEASUREGX Field Verification",
+    "slug": "measuregx-mobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "icon": "./assets/icon.png",
+    "splash": {
+      "image": "./assets/splash_intro.png",
+      "backgroundColor": "#FFFFFF",
+      "resizeMode": "contain"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.measuregx.fieldapp"
+    },
+    "android": {
+      "package": "com.measuregx.fieldapp",
+      "versionCode": 1,
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#FFFFFF"
+      },
+      "permissions": [
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION",
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE"
+      ]
+    },
+    "plugins": [
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "MEASUREGX needs access to your gallery to attach legal metrology verification evidence.",
+          "cameraPermission": "MEASUREGX needs access to your camera to capture physical lead seals and stamping plate evidence."
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "MEASUREGX requires real-time GPS coordinates to stamp statutory geo-tag verification metadata onto on-site evidence photos."
+        }
+      ]
+    ],
+    "web": {
+      "bundler": "metro"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "5490d190-8023-4343-8422-0bc6a919e563"
+      }
+    }
+  }
+}
