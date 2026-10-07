@@ -193,14 +193,7 @@ export default function PortalChatbot() {
     <>
       {/* 1. FLOATING TOY BOT LAUNCHER (Always active on bottom right when closed) */}
       {!isOpen && (
-        <div
-          style={{
-            position: 'fixed',
-            bottom: '24px',
-            right: '24px',
-            zIndex: 9999,
-          }}
-        >
+        <div className="portal-chatbot-launcher">
           <ToyBotAvatar
             size={64}
             expression="idle"
@@ -218,26 +211,7 @@ export default function PortalChatbot() {
 
       {/* 2. EXPANDED INTERACTIVE CHAT WINDOW */}
       {isOpen && (
-        <div
-          style={{
-            position: 'fixed',
-            bottom: '20px',
-            right: '20px',
-            width: '92vw',
-            maxWidth: '430px',
-            height: '620px',
-            maxHeight: '86vh',
-            backgroundColor: '#FFFFFF',
-            borderRadius: '24px',
-            boxShadow: '0 20px 48px rgba(15, 23, 42, 0.28), 0 0 0 1px rgba(15, 23, 42, 0.08)',
-            display: 'flex',
-            flexDirection: 'column',
-            overflow: 'hidden',
-            zIndex: 9999,
-            animation: 'toyBotFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
-            fontFamily: 'inherit',
-          }}
-        >
+        <div className="portal-chatbot-modal">
           {/* Top Header with Interactive Toy Bot Mascot */}
           <div
             style={{
@@ -683,7 +657,7 @@ export default function PortalChatbot() {
         </div>
       )}
 
-      {/* Animation Styles */}
+      {/* Animation & Responsive Styles */}
       <style>{`
         @keyframes toyBotFadeIn {
           from {
@@ -693,6 +667,54 @@ export default function PortalChatbot() {
           to {
             opacity: 1;
             transform: translateY(0px) scale(1);
+          }
+        }
+
+        .portal-chatbot-launcher {
+          position: fixed;
+          bottom: 24px;
+          right: 24px;
+          z-index: 9999;
+        }
+
+        .portal-chatbot-modal {
+          position: fixed;
+          bottom: 20px;
+          right: 20px;
+          width: 92vw;
+          maxWidth: 430px;
+          height: 620px;
+          maxHeight: 86vh;
+          background-color: #FFFFFF;
+          border-radius: 24px;
+          box-shadow: 0 20px 48px rgba(15, 23, 42, 0.28), 0 0 0 1px rgba(15, 23, 42, 0.08);
+          display: flex;
+          flex-direction: column;
+          overflow: hidden;
+          z-index: 9999;
+          animation: toyBotFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+          font-family: inherit;
+        }
+
+        @media (max-width: 640px) {
+          .portal-chatbot-launcher {
+            bottom: 16px;
+            right: 14px;
+            transform: scale(0.92);
+            transform-origin: bottom right;
+          }
+          .portal-chatbot-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            width: 100vw;
+            max-width: 100vw;
+            height: 100%;
+            height: 100dvh;
+            max-height: 100dvh;
+            border-radius: 0;
           }
         }
       `}</style>

@@ -4,6 +4,61 @@
    Soft Atmospheric Lighting, Clean ~60 FPS
    ============================================================ */
 
+.hero-section-root {
+  position: relative;
+  padding: 3.5rem 1.5rem 3.5rem;
+  overflow: hidden;
+  min-height: 660px;
+  display: flex;
+  align-items: center;
+  background: #F9FAFB;
+  border-bottom: 1px solid #E2E8F0;
+}
+
+@media (min-width: 961px) {
+  .hero-section-root {
+    max-height: 820px;
+  }
+}
+
+.hero-grid-layout {
+  display: grid;
+  grid-template-columns: 0.85fr 1.15fr;
+  gap: 2.5rem;
+  align-items: center;
+  width: 100%;
+}
+
+@media (max-width: 960px) {
+  .hero-section-root {
+    padding: 2.5rem 1rem 3rem;
+    min-height: auto;
+    max-height: none !important;
+  }
+  .hero-grid-layout {
+    grid-template-columns: 1fr;
+    gap: 2.5rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .hero-section-root {
+    padding: 1.75rem 0.85rem 2.25rem;
+  }
+  .hero-heading-root {
+    font-size: clamp(2rem, 7.5vw, 3.2rem) !important;
+  }
+  .hero-subtitle-text {
+    font-size: 0.92rem !important;
+    line-height: 1.5 !important;
+  }
+  .hero-cta-primary,
+  .hero-cta-secondary {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
 /* 1. Background Layers: Atmospheric Lighting, Technical Grid & Network */
 .hero-atmosphere-back {
   position: absolute;

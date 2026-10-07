@@ -532,6 +532,17 @@
   }
 }
 
+@media (max-width: 380px) {
+  .m3d-container {
+    height: 400px;
+    transform: scale(0.62);
+    margin: -45px auto;
+  }
+  .m3d-card-verify {
+    width: 240px;
+  }
+}
+
 /* ------------------------------------------------------------
    ACCESSIBILITY: REDUCED MOTION OVERRIDE
    ------------------------------------------------------------ */

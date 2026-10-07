@@ -110,18 +110,7 @@ export default function HeroSection({ onVerifyClick, onExploreClick }) {
       ref={heroRef}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
-      className={isRevealed ? 'hero-revealed' : ''}
-      style={{
-        position: 'relative',
-        padding: '3.5rem 1.5rem 3.5rem',
-        overflow: 'hidden',
-        minHeight: '660px',
-        maxHeight: '800px',
-        display: 'flex',
-        alignItems: 'center',
-        background: '#F9FAFB',
-        borderBottom: '1px solid #E2E8F0',
-      }}
+      className={`hero-section-root ${isRevealed ? 'hero-revealed' : ''}`}
     >
       {/* 1. BACK LAYER: Soft, wide atmospheric lighting */}
       <div ref={atmosphereRef} className="hero-atmosphere-back" />
@@ -196,15 +185,7 @@ export default function HeroSection({ onVerifyClick, onExploreClick }) {
           zIndex: 10,
         }}
       >
-        <div
-          className="hero-grid-layout"
-          style={{
-            display: 'grid',
-            gridTemplateColumns: '0.85fr 1.15fr',
-            gap: '2.5rem',
-            alignItems: 'center',
-          }}
-        >
+        <div className="hero-grid-layout">
           {/* LEFT COLUMN: ~42% */}
           <div style={{ maxWidth: '580px' }}>
             {/* Small Uppercase Eyebrow Badge */}
@@ -297,15 +278,6 @@ export default function HeroSection({ onVerifyClick, onExploreClick }) {
           </div>
         </div>
       </div>
-
-      <style>{`
-        @media (max-width: 960px) {
-          .hero-grid-layout {
-            grid-template-columns: 1fr !important;
-            gap: 3rem !important;
-          }
-        }
-      `}</style>
     </section>
   );
 }

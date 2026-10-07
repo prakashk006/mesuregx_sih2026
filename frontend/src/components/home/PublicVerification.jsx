@@ -435,6 +435,12 @@ export default function PublicVerification() {
               gap: 2rem !important;
             }
           }
+          @media (max-width: 640px) {
+            .verification-container {
+              padding: 1.25rem 1rem !important;
+              border-radius: 16px !important;
+            }
+          }
         `}</style>
       </section>
 

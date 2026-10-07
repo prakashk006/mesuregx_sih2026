@@ -92,11 +92,11 @@ export default function LandingPage() {
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', color: '#FFFFFF', fontWeight: 700 }}>
             <Globe size={13} color="#FFFFFF" /> MEASUREGX LEGAL METROLOGY PLATFORM
           </span>
-          <span style={{ color: 'rgba(255, 255, 255, 0.35)' }}>|</span>
-          <span style={{ color: '#D1FAE5', fontWeight: 600 }}>Every Measure Matters • Support Desk</span>
+          <span className="desktop-only-view" style={{ color: 'rgba(255, 255, 255, 0.35)' }}>|</span>
+          <span className="desktop-only-view" style={{ color: '#D1FAE5', fontWeight: 600 }}>Every Measure Matters • Support Desk</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', color: '#D1FAE5', fontWeight: 600 }}>
+          <span className="desktop-only-view" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', color: '#D1FAE5', fontWeight: 600 }}>
             <Radio size={12} color="#10B981" className="animate-pulse" /> Grid Active (36 States)
           </span>
           <Link
@@ -111,7 +111,7 @@ export default function LandingPage() {
               transition: 'color 0.2s',
             }}
           >
-            <AlertTriangle size={13} color="#F59E0B" /> Public Vigilance & Grievance Portal
+            <AlertTriangle size={13} color="#F59E0B" /> Public Vigilance & Grievance
           </Link>
         </div>
       </div>
@@ -123,7 +123,7 @@ export default function LandingPage() {
       />
 
       {/* 3. Quick Demo Access Strip */}
-      <div style={{ padding: '0 1.5rem', margin: '-1.5rem 0 2rem 0', position: 'relative', zIndex: 30 }}>
+      <div className="landing-demo-strip-container" style={{ padding: '0 1.5rem', margin: '-1.5rem 0 2rem 0', position: 'relative', zIndex: 30 }}>
         <div style={{ maxWidth: '1440px', margin: '0 auto' }}>
           <div
             style={{
