@@ -328,56 +328,6 @@ export default function FieldInspectionScreen({ route, navigation }) {
     digitalSignatureConfirmed
   );
 
-  // ⚡ 1-Tap Demo Fast-Fill Helper (For Rapid Hackathon & Video Demo)
-  const handleDemoFastFill = () => {
-    // 1. Stage 1: Mechanical Checks
-    setPhysicalChecks({
-      sealIntact: true,
-      levelCentered: true,
-      stampingPlateVisible: true,
-      photoAttached: true,
-    });
-
-    // Sample evidence photo if none attached
-    if (!evidencePhoto) {
-      setEvidencePhoto({
-        uri: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=800&auto=format&fit=crop&q=80',
-        latitude: 11.0168,
-        longitude: 76.9558,
-        accuracy: 3.2,
-        address: biz.businessAddress || 'Field Inspection Site, Coimbatore',
-        district: 'Coimbatore',
-        state: 'Tamil Nadu',
-        isLiveGps: true,
-        timestamp: new Date().toLocaleString('en-IN'),
-        sealNumber: `SEAL-TN-${Date.now().toString().slice(-6)}`,
-        fileSize: '420 KB',
-      });
-    }
-
-    // 2. Stage 2: Realistic OIML R 76 Load Readings
-    const filledReadings = [
-      { load: '0.000', observed: '0.000', mpe: '±0.002', passed: true },
-      { load: '5.000', observed: '5.001', mpe: '±0.005', passed: true },
-      { load: '15.000', observed: '15.002', mpe: '±0.010', passed: true },
-      { load: '30.000', observed: '30.003', mpe: '±0.015', passed: true },
-    ];
-    setReadings(filledReadings);
-
-    // 3. Stage 3: Lead Seal & Statutory Decision
-    const generatedSeal = `SEAL-TN-${Math.floor(100000 + Math.random() * 900000)}`;
-    setSealNumber(generatedSeal);
-    setStampApplied(true);
-    setOfficerDecision('PASS');
-    setRemarks('Instrument verified compliant with Legal Metrology General Rules, 2011 and OIML R 76 accuracy standards.');
-    setDigitalSignatureConfirmed(true);
-
-    Alert.alert(
-      '⚡ Demo Suite Loaded',
-      'Stage 1 (Checks), Stage 2 (OIML Readings), and Stage 3 (Lead Seal & Decision) have been populated with realistic statutory pass data.'
-    );
-  };
-
   const handleStepNavigation = (targetStep) => {
     if (targetStep === currentStep) return;
 
@@ -552,28 +502,6 @@ export default function FieldInspectionScreen({ route, navigation }) {
           </View>
         </View>
       </View>
-
-      {/* ⚡ Demo Fast-Fill Pill (For presentation & video demo speed) */}
-      {!isReadOnly && (
-        <TouchableOpacity
-          style={styles.demoFastFillBanner}
-          onPress={handleDemoFastFill}
-          activeOpacity={0.85}
-        >
-          <View style={styles.demoFastFillRow}>
-            <Text style={styles.demoFastFillIcon}>⚡</Text>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.demoFastFillTitle}>DEMO SIMULATOR: Auto-Fill OIML R 76 Suite</Text>
-              <Text style={styles.demoFastFillSub}>
-                1-tap populates statutory visual checks, multi-point load tests, and seal for rapid presentation.
-              </Text>
-            </View>
-            <View style={styles.demoFastFillBadge}>
-              <Text style={styles.demoFastFillBadgeText}>AUTO-FILL</Text>
-            </View>
-          </View>
-        </TouchableOpacity>
-      )}
 
       {/* Official Government Sovereign Read-Only Archive Banner */}
       {isReadOnly && (
@@ -1977,48 +1905,6 @@ const styles = StyleSheet.create({
     color: COLORS.white,
     fontSize: 13,
     fontWeight: '700',
-  },
-  demoFastFillBanner: {
-    backgroundColor: '#FEF3C7',
-    borderWidth: 1.5,
-    borderColor: '#F59E0B',
-    borderRadius: 12,
-    padding: 12,
-    marginBottom: 12,
-    ...SHADOWS.card,
-  },
-  demoFastFillRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  demoFastFillIcon: {
-    fontSize: 22,
-    marginRight: 10,
-  },
-  demoFastFillTitle: {
-    fontSize: 13,
-    fontWeight: '800',
-    color: '#92400E',
-    letterSpacing: 0.2,
-  },
-  demoFastFillSub: {
-    fontSize: 11,
-    color: '#B45309',
-    marginTop: 2,
-    lineHeight: 15,
-  },
-  demoFastFillBadge: {
-    backgroundColor: '#D97706',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-    marginLeft: 8,
-  },
-  demoFastFillBadgeText: {
-    color: '#FFFFFF',
-    fontSize: 10,
-    fontWeight: '800',
-    letterSpacing: 0.5,
   },
   formulaCard: {
     backgroundColor: '#EFF6FF',
