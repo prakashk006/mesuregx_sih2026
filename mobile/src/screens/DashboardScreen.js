@@ -147,6 +147,7 @@ export default function DashboardScreen({ navigation }) {
         <TouchableOpacity
           style={styles.offlineAlertCard}
           onPress={() => navigation.navigate('SyncQueue')}
+          activeOpacity={0.85}
         >
           <View style={styles.offlineAlertRow}>
             <Text style={styles.offlineAlertIcon}>⚡</Text>
@@ -155,10 +156,12 @@ export default function DashboardScreen({ navigation }) {
                 {offlineCount} Field Inspections Saved Locally
               </Text>
               <Text style={styles.offlineAlertSub}>
-                Tap here to open Sync Queue and upload certificates to central server.
+                Ready to sync certificates to central sovereign cloud ledger.
               </Text>
             </View>
-            <Text style={styles.offlineAlertArrow}>→</Text>
+            <View style={styles.syncNowBtnBadge}>
+              <Text style={styles.syncNowBtnText}>SYNC NOW →</Text>
+            </View>
           </View>
         </TouchableOpacity>
       )}
@@ -357,10 +360,18 @@ const styles = StyleSheet.create({
     fontSize: 11,
     marginTop: 2,
   },
-  offlineAlertArrow: {
-    fontSize: 16,
-    color: '#92400E',
+  syncNowBtnBadge: {
+    backgroundColor: '#D97706',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
     marginLeft: 8,
+  },
+  syncNowBtnText: {
+    color: '#FFFFFF',
+    fontSize: 11,
+    fontWeight: '800',
+    letterSpacing: 0.5,
   },
   statsGrid: {
     flexDirection: 'row',

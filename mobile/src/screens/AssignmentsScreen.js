@@ -158,18 +158,23 @@ export default function AssignmentsScreen({ navigation }) {
         />
       </View>
 
-      {/* Filter Tabs */}
+      {/* Filter Tabs with Workload Counts */}
       <View style={styles.filterRow}>
-        {['ALL', 'SCHEDULED', 'IN_PROGRESS', 'COMPLETED'].map((f) => (
+        {[
+          { key: 'ALL', label: `All (${assignments.length})` },
+          { key: 'SCHEDULED', label: `Scheduled (${assignments.filter((a) => a.status === 'SCHEDULED' || a.status === 'ASSIGNED' || a.status === 'PENDING' || a.application?.status === 'ASSIGNED' || a.application?.status === 'SCHEDULED').length})` },
+          { key: 'IN_PROGRESS', label: `In Progress (${assignments.filter((a) => a.status === 'IN_PROGRESS' || a.application?.status === 'IN_PROGRESS').length})` },
+          { key: 'COMPLETED', label: `Completed (${assignments.filter((a) => a.status === 'COMPLETED' || a.application?.status === 'VERIFIED' || a.application?.status === 'CERTIFICATE_ISSUED').length})` },
+        ].map((f) => (
           <TouchableOpacity
-            key={f}
-            style={[styles.filterBtn, filter === f && styles.filterBtnActive]}
-            onPress={() => setFilter(f)}
+            key={f.key}
+            style={[styles.filterBtn, filter === f.key && styles.filterBtnActive]}
+            onPress={() => setFilter(f.key)}
           >
             <Text
-              style={[styles.filterBtnText, filter === f && styles.filterBtnTextActive]}
+              style={[styles.filterBtnText, filter === f.key && styles.filterBtnTextActive]}
             >
-              {f === 'ALL' ? 'All' : f.replace('_', ' ')}
+              {f.label}
             </Text>
           </TouchableOpacity>
         ))}

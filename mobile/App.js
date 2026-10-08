@@ -7,6 +7,8 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 
+import { Ionicons } from '@expo/vector-icons';
+
 import { AuthProvider, useAuth } from './src/context/AuthContext';
 import { COLORS } from './src/theme/theme';
 
@@ -71,14 +73,20 @@ function MainTabNavigator() {
         tabBarActiveTintColor: COLORS.primary,
         tabBarInactiveTintColor: COLORS.textSecondary,
         tabBarLabelStyle: { fontSize: 11, fontWeight: '600' },
-        tabBarIcon: ({ focused, color }) => {
-          let icon = '📱';
-          if (route.name === 'Dashboard') icon = '🏠';
-          else if (route.name === 'Assignments') icon = '📋';
-          else if (route.name === 'SyncQueue') icon = '🔄';
-          else if (route.name === 'Lookup') icon = '🔍';
-          else if (route.name === 'Settings') icon = '⚙️';
-          return <Text style={{ fontSize: 18 }}>{icon}</Text>;
+        tabBarIcon: ({ focused, color, size = 20 }) => {
+          let iconName = 'speedometer-outline';
+          if (route.name === 'Dashboard') {
+            iconName = focused ? 'speedometer' : 'speedometer-outline';
+          } else if (route.name === 'Assignments') {
+            iconName = focused ? 'clipboard' : 'clipboard-outline';
+          } else if (route.name === 'SyncQueue') {
+            iconName = focused ? 'sync-circle' : 'sync-circle-outline';
+          } else if (route.name === 'Lookup') {
+            iconName = focused ? 'qr-code' : 'qr-code-outline';
+          } else if (route.name === 'Settings') {
+            iconName = focused ? 'settings' : 'settings-outline';
+          }
+          return <Ionicons name={iconName} size={size} color={color} />;
         },
       })}
     >
